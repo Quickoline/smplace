@@ -19,6 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
@@ -26,11 +27,21 @@ const allowedOrigins = [
   "http://127.0.0.1:65157",
   "http://localhost:65141",
   "http://127.0.0.1:65141",
+  "https://elizble.com",
+  "https://www.elizble.com",
+  "https://elizble.in",
+  "https://www.elizble.in",
+  "https://smweb.elizble.com",
 ];
+const extraOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const allowedOriginSet = new Set([...allowedOrigins, ...extraOrigins]);
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      if (!origin || allowedOriginSet.has(origin)) return cb(null, true);
       if (origin?.startsWith("http://localhost:") || origin?.startsWith("http://127.0.0.1:"))
         return cb(null, true);
       cb(null, false);

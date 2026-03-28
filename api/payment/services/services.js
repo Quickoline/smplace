@@ -40,7 +40,7 @@ export const createPaymentRequest = async ({
       receipt: `order_${orderId}`,
     });
 
-    const baseUrl = process.env.BASE_URL || "http://localhost:5000";
+    const baseUrl = process.env.BASE_URL || "https://api.elizble.com";
     const paymentLink = await razorpay.paymentLink.create({
       amount: Math.round(amount * 100),
       currency: "INR",
