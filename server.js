@@ -38,15 +38,36 @@ const extraOrigins = (process.env.ALLOWED_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 const allowedOriginSet = new Set([...allowedOrigins, ...extraOrigins]);
+const deployHosts = (process.env.CORS_DEPLOY_HOSTS || "62.72.56.117")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const originAllowed = (origin) => {
+  if (!origin || allowedOriginSet.has(origin)) return true;
+  if (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:"))
+    return true;
+  try {
+    const u = new URL(origin);
+    const httpOk = u.protocol === "http:" || u.protocol === "https:";
+    if (!httpOk) return false;
+    if (deployHosts.length && deployHosts.includes(u.hostname)) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+};
+
 app.use(
   cors({
-    origin: (origin, cb) => {
-      if (!origin || allowedOriginSet.has(origin)) return cb(null, true);
-      if (origin?.startsWith("http://localhost:") || origin?.startsWith("http://127.0.0.1:"))
-        return cb(null, true);
-      cb(null, false);
-    },
+    origin: (origin, cb) => cb(null, originAllowed(origin)),
     credentials: true,
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Auth-Token",
+      "X-Access-Token",
+    ],
   })
 );
 app.use(express.json());

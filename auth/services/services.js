@@ -8,7 +8,7 @@ const JWT_EXPIRES_IN = "7d";
 const generateToken = (user) =>
   jwt.sign(
     {
-      id: user._id,
+      id: user._id?.toString?.() ?? String(user._id),
       role: user.role,
       email: user.email,
     },

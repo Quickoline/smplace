@@ -3,7 +3,13 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "change_me_in_production";
 
 export const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  let authHeader = req.headers.authorization;
+  const rawAlt =
+    req.headers["x-auth-token"] || req.headers["x-access-token"];
+  const alt = Array.isArray(rawAlt) ? rawAlt[0] : rawAlt;
+  if ((!authHeader || !authHeader.startsWith("Bearer ")) && alt) {
+    authHeader = `Bearer ${String(alt).trim()}`;
+  }
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Authorization token missing" });
