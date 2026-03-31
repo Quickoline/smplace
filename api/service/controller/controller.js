@@ -8,10 +8,12 @@ import {
 
 export const createServiceController = async (req, res) => {
   try {
-    const { name, category, description, price, requirements } = req.body;
+    const { name, category, subcategory, description, price, requirements } =
+      req.body;
     const service = await createService({
       name,
       category,
+      subcategory,
       description,
       price,
       requirements,

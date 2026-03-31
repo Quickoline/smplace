@@ -24,47 +24,52 @@ router.get(
   adminCategoriesWithServicesController
 );
 
-// Superadmin-only CRUD for categories & subcategories
-router.get("/", authenticate, requireRole("superadmin"), listCategoriesController);
+// Admin CRUD for categories & subcategories (same roles as /services writes)
+router.get(
+  "/",
+  authenticate,
+  requireRole("admin", "superadmin"),
+  listCategoriesController
+);
 router.post(
   "/",
   authenticate,
-  requireRole("superadmin"),
+  requireRole("admin", "superadmin"),
   createCategoryController
 );
 
 router.get(
   "/:id",
   authenticate,
-  requireRole("superadmin"),
+  requireRole("admin", "superadmin"),
   getCategoryController
 );
 
 router.put(
   "/:id",
   authenticate,
-  requireRole("superadmin"),
+  requireRole("admin", "superadmin"),
   updateCategoryController
 );
 
 router.delete(
   "/:id",
   authenticate,
-  requireRole("superadmin"),
+  requireRole("admin", "superadmin"),
   deleteCategoryController
 );
 
 router.post(
   "/:id/subcategories",
   authenticate,
-  requireRole("superadmin"),
+  requireRole("admin", "superadmin"),
   addSubcategoryController
 );
 
 router.delete(
   "/:id/subcategories/:subId",
   authenticate,
-  requireRole("superadmin"),
+  requireRole("admin", "superadmin"),
   removeSubcategoryController
 );
 

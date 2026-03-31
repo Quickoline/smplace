@@ -39,18 +39,17 @@ export const getServiceById = async (id) => {
 };
 
 export const updateService = async (id, payload) => {
+  const $set = {};
+  if (payload.name !== undefined) $set.name = payload.name;
+  if (payload.category !== undefined) $set.category = payload.category;
+  if (payload.subcategory !== undefined) $set.subcategory = payload.subcategory;
+  if (payload.description !== undefined) $set.description = payload.description;
+  if (payload.price !== undefined) $set.price = payload.price;
+  if (payload.requirements !== undefined) $set.requirements = payload.requirements;
+
   const service = await Service.findByIdAndUpdate(
     id,
-    {
-      $set: {
-        name: payload.name,
-        category: payload.category,
-        subcategory: payload.subcategory,
-        description: payload.description,
-        price: payload.price,
-        requirements: payload.requirements,
-      },
-    },
+    { $set },
     { new: true, runValidators: true }
   );
 

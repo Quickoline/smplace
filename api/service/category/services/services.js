@@ -37,7 +37,9 @@ export const updateCategory = async (id, { name, subcategories }) => {
   const update = {};
   if (name) update.name = name;
   if (Array.isArray(subcategories)) {
-    update.subcategories = subcategories.map((n) => ({ name: n }));
+    update.subcategories = subcategories.map((n) =>
+      typeof n === "string" ? { name: n } : { name: n?.name ?? n }
+    );
   }
 
   const cat = await ServiceCategory.findByIdAndUpdate(
