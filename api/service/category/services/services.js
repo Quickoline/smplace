@@ -95,32 +95,57 @@ export const removeSubcategory = async (id, subcategoryId) => {
   return cat;
 };
 
+/**
+ * Admin tree: categories with nested subcategories and services (by categoryId / subcategoryId).
+ */
 export const listAdminCategoriesWithServices = async (adminId) => {
-  // Services created by this admin
-  const services = await Service.find({ createdBy: adminId });
+  const services = await Service.find({ createdBy: adminId })
+    .populate("categoryId")
+    .sort({ createdAt: -1 })
+    .lean();
 
-  // Group by category + subcategory
-  const result = {};
+  const byCat = new Map();
 
-  services.forEach((svc) => {
-    const catName = svc.category || "uncategorized";
-    const subName = svc.subcategory || "default";
+  for (const svc of services) {
+    const cat = svc.categoryId;
+    if (!cat || !cat._id) continue;
 
-    if (!result[catName]) {
-      result[catName] = {};
+    const catId = String(cat._id);
+    if (!byCat.has(catId)) {
+      byCat.set(catId, {
+        categoryId: catId,
+        name: cat.name,
+        subMap: new Map(),
+      });
     }
-    if (!result[catName][subName]) {
-      result[catName][subName] = [];
+    const bucket = byCat.get(catId);
+
+    const subIdRaw = svc.subcategoryId ? String(svc.subcategoryId) : "";
+    const subDoc = subIdRaw
+      ? (cat.subcategories || []).find((s) => String(s._id) === subIdRaw)
+      : null;
+    const subKey = subIdRaw || "_none";
+    const subName = subDoc?.name || (subIdRaw ? "Subcategory" : "General");
+
+    if (!bucket.subMap.has(subKey)) {
+      bucket.subMap.set(subKey, {
+        subcategoryId: subIdRaw || null,
+        name: subName,
+        services: [],
+      });
     }
 
-    result[catName][subName].push({
-      id: svc._id,
+    bucket.subMap.get(subKey).services.push({
+      id: String(svc._id),
       name: svc.name,
       description: svc.description,
       price: svc.price,
     });
-  });
+  }
 
-  return result;
+  return [...byCat.values()].map((b) => ({
+    categoryId: b.categoryId,
+    name: b.name,
+    subcategories: [...b.subMap.values()],
+  }));
 };
-

@@ -7,16 +7,23 @@ import { createService } from "../api/service/services/services.js";
 import { createOrder } from "../api/order/services/services.js";
 import { createListing } from "../api/buySell/services/services.js";
 import { Service } from "../api/service/model/model.js";
+import { ServiceCategory } from "../api/service/category/model/model.js";
 import { BuySellListing } from "../api/buySell/model/model.js";
 import { Order } from "../api/order/model/model.js";
+import { Message } from "../api/chat/model/model.js";
+import { Payment } from "../api/payment/model/model.js";
+import { WalletTransaction } from "../api/wallet/model/model.js";
 
-/**
- * Inserts new rows only when no document exists for this admin with the same
- * service name+category (or buy/sell title). If a row already exists, the script
- * updates price/description/etc. when your seed data changed — so "new data" in
- * this file syncs to MongoDB without duplicating users/admins.
- */
-/** Service marketplace offerings — one per category / subcategory style */
+/** CATEGORY_TREE.name / sub names are seed lookup keys; DB uses categoryId + subcategoryId only. */
+const CATEGORY_TREE = [
+  { name: "software", subcategories: ["web", "mobile"] },
+  { name: "legal", subcategories: ["contracts", "corporate"] },
+  { name: "design", subcategories: ["branding", "ui_ux"] },
+  { name: "hiring", subcategories: ["tech", "leadership"] },
+  { name: "consultancy", subcategories: ["strategy", "operations"] },
+  { name: "buying_selling", subcategories: ["saas"] },
+];
+
 const SERVICE_SEEDS = [
   {
     name: "Full-Stack Web App",
@@ -108,7 +115,6 @@ const SERVICE_SEEDS = [
   },
 ];
 
-/** Buy/sell listings (product vs company) */
 const BUYSELL_SEEDS = [
   {
     title: "Premium Support Tool License (Resale)",
@@ -128,166 +134,167 @@ const BUYSELL_SEEDS = [
   },
 ];
 
+async function wipeDatabase() {
+  await Message.deleteMany({});
+  await WalletTransaction.deleteMany({});
+  await Payment.deleteMany({});
+  await Order.deleteMany({});
+  await Service.deleteMany({});
+  await BuySellListing.deleteMany({});
+  await ServiceCategory.deleteMany({});
+  await User.deleteMany({});
+  console.log("✓ Cleared: messages, wallet, payments, orders, services, listings, categories, users");
+}
+
 const run = async () => {
   try {
     await connectDB();
+    await wipeDatabase();
 
     const superadminEmail = process.env.SUPERADMIN_EMAIL || "superadmin@test.com";
     const superadminPassword = process.env.SUPERADMIN_PASSWORD || "SuperAdmin123";
 
-    let superadmin = await User.findOne({ email: superadminEmail, role: "superadmin" });
-    if (!superadmin) {
-      const bcrypt = (await import("bcryptjs")).default;
-      superadmin = await User.create({
-        email: superadminEmail,
-        passwordHash: await bcrypt.hash(superadminPassword, 10),
-        role: "superadmin",
-      });
-      console.log("✓ Superadmin created:", superadminEmail);
-    } else {
-      console.log("— Superadmin already exists (skipped):", superadminEmail);
-    }
+    const bcrypt = (await import("bcryptjs")).default;
+    const superadmin = await User.create({
+      email: superadminEmail,
+      passwordHash: await bcrypt.hash(superadminPassword, 10),
+      role: "superadmin",
+    });
+    console.log("✓ Superadmin:", superadminEmail, "| _id:", superadmin._id.toString());
 
     const adminEmail = "admin@test.com";
     const adminPassword = "Admin123";
-    let admin = await User.findOne({ email: adminEmail, role: "admin" });
-    if (!admin) {
-      const result = await createAdminBySuperAdmin({
-        email: adminEmail,
-        employeeId: "EMP001",
-        password: adminPassword,
-        phone: "9876543210",
-        phoneLast4: "3210",
-        qrCodeUrl: null,
-        createdBy: superadmin._id,
-      });
-      admin = result.admin;
-      console.log("✓ Admin created:", adminEmail);
-    } else {
-      console.log("— Admin already exists (skipped):", adminEmail);
-    }
+    const adminResult = await createAdminBySuperAdmin({
+      email: adminEmail,
+      employeeId: "EMP001",
+      password: adminPassword,
+      phone: "9876543210",
+      phoneLast4: "3210",
+      qrCodeUrl: null,
+      createdBy: superadmin._id,
+    });
+    const admin = adminResult.admin;
+    console.log("✓ Admin:", adminEmail, "| _id:", admin._id.toString());
 
     const userEmail = "user@test.com";
     const userPassword = "User123";
-    let user = await User.findOne({ email: userEmail, role: "user" });
-    if (!user) {
-      const result = await registerUser({
-        email: userEmail,
-        phone: "9123456789",
-        password: userPassword,
+    const userResult = await registerUser({
+      email: userEmail,
+      phone: "9123456789",
+      password: userPassword,
+    });
+    const user = userResult.user;
+    console.log("✓ User:", userEmail, "| _id:", user._id.toString());
+
+    const categoryByName = new Map();
+    const subIdByCatAndSub = new Map();
+
+    for (const row of CATEGORY_TREE) {
+      const doc = await ServiceCategory.create({
+        name: row.name,
+        subcategories: row.subcategories.map((name) => ({ name })),
       });
-      user = result.user;
-      console.log("✓ User created:", userEmail);
-    } else {
-      console.log("— User already exists (skipped):", userEmail);
+      categoryByName.set(row.name, doc);
+      for (const sub of doc.subcategories) {
+        subIdByCatAndSub.set(`${row.name}:${sub.name}`, sub._id);
+      }
+      console.log(
+        "  + Category:",
+        row.name,
+        "| categoryId:",
+        doc._id.toString(),
+        "| subcategories:",
+        doc.subcategories.map((s) => `${s.name}→${s._id}`).join(", ")
+      );
     }
 
-    let servicesInserted = 0;
-    let servicesUpdated = 0;
+    const createdServices = [];
     for (const row of SERVICE_SEEDS) {
-      const exists = await Service.findOne({
-        createdBy: admin._id,
-        name: row.name,
-        category: row.category,
-      });
-      if (exists) {
-        const changed =
-          exists.description !== row.description ||
-          exists.price !== row.price ||
-          (exists.subcategory || "") !== (row.subcategory || "") ||
-          (exists.requirements || "") !== (row.requirements || "");
-        if (changed) {
-          await Service.updateOne(
-            { _id: exists._id },
-            {
-              $set: {
-                subcategory: row.subcategory,
-                description: row.description,
-                price: row.price,
-                requirements: row.requirements,
-              },
-            }
-          );
-          servicesUpdated += 1;
-          console.log("  ~ Service updated:", row.name);
-        }
-        continue;
+      const catDoc = categoryByName.get(row.category);
+      if (!catDoc) {
+        throw new Error(`Unknown category slug: ${row.category}`);
       }
-      await createService({
-        ...row,
+      const subId = subIdByCatAndSub.get(`${row.category}:${row.subcategory}`);
+      if (!subId) {
+        throw new Error(`Unknown subcategory: ${row.category} / ${row.subcategory}`);
+      }
+      const svc = await createService({
+        name: row.name,
+        categoryId: catDoc._id,
+        subcategoryId: subId,
+        description: row.description,
+        price: row.price,
+        requirements: row.requirements,
         userId: admin._id,
       });
-      servicesInserted += 1;
-      console.log("  + Service:", row.name, `(${row.category})`);
+      createdServices.push(svc);
+      console.log(
+        "  + Service:",
+        row.name,
+        "| serviceId:",
+        svc._id,
+        "| categoryId:",
+        svc.categoryId,
+        "| subcategoryId:",
+        svc.subcategoryId
+      );
     }
-    const servicesSkipped = SERVICE_SEEDS.length - servicesInserted - servicesUpdated;
-    console.log(
-      `✓ Services: ${servicesInserted} inserted, ${servicesUpdated} updated from seed file, ${servicesSkipped} unchanged`
-    );
+    console.log(`✓ Services: ${createdServices.length} created (linked to category & subcategory _id)`);
 
-    let listingsInserted = 0;
-    let listingsUpdated = 0;
     for (const row of BUYSELL_SEEDS) {
-      const exists = await BuySellListing.findOne({
-        createdBy: admin._id,
-        title: row.title,
-      });
-      if (exists) {
-        const changed =
-          exists.description !== row.description ||
-          exists.price !== row.price ||
-          exists.type !== row.type ||
-          (exists.serviceCategory || "") !== (row.serviceCategory || "") ||
-          (exists.requirements || "") !== (row.requirements || "");
-        if (changed) {
-          await BuySellListing.updateOne(
-            { _id: exists._id },
-            {
-              $set: {
-                type: row.type,
-                description: row.description,
-                price: row.price,
-                serviceCategory: row.serviceCategory,
-                requirements: row.requirements,
-              },
-            }
-          );
-          listingsUpdated += 1;
-          console.log("  ~ Buy/Sell updated:", row.title);
-        }
-        continue;
-      }
       await createListing({
         ...row,
         userId: admin._id,
       });
-      listingsInserted += 1;
-      console.log("  + Buy/Sell:", row.title, `(${row.type})`);
+      console.log("  + Buy/Sell:", row.title);
     }
-    const listingsSkipped = BUYSELL_SEEDS.length - listingsInserted - listingsUpdated;
-    console.log(
-      `✓ Buy/Sell: ${listingsInserted} inserted, ${listingsUpdated} updated from seed file, ${listingsSkipped} unchanged`
-    );
+    console.log(`✓ Buy/Sell: ${BUYSELL_SEEDS.length} created`);
 
-    const firstService = await Service.findOne({ createdBy: admin._id }).sort({ createdAt: 1 });
-    const hasOrder = firstService
-      ? await Order.findOne({ createdBy: user._id, service: firstService._id })
-      : null;
-    if (firstService && !hasOrder) {
+    const firstService = createdServices[0];
+    if (firstService) {
       await createOrder({
         serviceId: firstService._id,
         source: "service",
         userId: user._id,
       });
-      console.log("✓ Sample order created for:", firstService.name);
-    } else {
-      console.log("— Sample order skipped (already exists or no service)");
+      console.log("✓ Sample order for service:", firstService.name);
     }
+
+    const catSummary = await ServiceCategory.find().lean();
+    const svcSummary = await Service.find({})
+      .select("name categoryId subcategoryId price")
+      .lean();
+
+    console.log("\n--- ID summary (JSON) ---");
+    console.log(
+      JSON.stringify(
+        {
+          categories: catSummary.map((c) => ({
+            _id: String(c._id),
+            name: c.name,
+            subcategories: (c.subcategories || []).map((s) => ({
+              _id: String(s._id),
+              name: s.name,
+            })),
+          })),
+          services: svcSummary.map((s) => ({
+            _id: String(s._id),
+            name: s.name,
+            categoryId: s.categoryId ? String(s.categoryId) : null,
+            subcategoryId: s.subcategoryId ? String(s.subcategoryId) : null,
+            price: s.price,
+          })),
+        },
+        null,
+        2
+      )
+    );
 
     console.log("\n--- Seed complete ---");
     console.log("Login:", superadminEmail, "|", adminEmail, "|", userEmail);
   } catch (error) {
     console.error("Seed error:", error.message);
+    console.error(error);
   } finally {
     await mongoose.disconnect();
     process.exit(0);
