@@ -57,7 +57,7 @@ export const listPaymentsController = async (req, res) => {
 export const verifyPaymentController = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await verifyPayment(id, req.user.id);
+    const result = await verifyPayment(id, req.user.id, req.user.role);
     res.status(200).json({
       message: "Payment verified. Amount added to user wallet.",
       payment: result.payment,

@@ -6,7 +6,10 @@ import {
   updateListingController,
   deleteListingController,
 } from "../controller/controller.js";
-import { authenticate, requireRole } from "../../../auth/middleware/middleware.js";
+import {
+  authenticate,
+  requireCatalogStaff,
+} from "../../../auth/middleware/middleware.js";
 
 const router = Router();
 
@@ -18,21 +21,21 @@ router.get("/:id", getListingController);
 router.post(
   "/",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   createListingController
 );
 
 router.put(
   "/:id",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   updateListingController
 );
 
 router.delete(
   "/:id",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   deleteListingController
 );
 

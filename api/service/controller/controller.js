@@ -8,8 +8,15 @@ import {
 
 export const createServiceController = async (req, res) => {
   try {
-    const { name, categoryId, subcategoryId, description, price, requirements } =
-      req.body;
+    const {
+      name,
+      categoryId,
+      subcategoryId,
+      description,
+      price,
+      requirements,
+      operationsAdminId,
+    } = req.body;
     const service = await createService({
       name,
       categoryId,
@@ -17,6 +24,7 @@ export const createServiceController = async (req, res) => {
       description,
       price,
       requirements,
+      operationsAdminId,
       userId: req.user?.id,
     });
     res.status(201).json({ message: "Service created", service });

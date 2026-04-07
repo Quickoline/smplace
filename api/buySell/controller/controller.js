@@ -15,6 +15,7 @@ export const createListingController = async (req, res) => {
       price,
       serviceCategory,
       requirements,
+      operationsAdminId,
     } = req.body;
 
     const listing = await createListing({
@@ -24,6 +25,7 @@ export const createListingController = async (req, res) => {
       price,
       serviceCategory,
       requirements,
+      operationsAdminId,
       userId: req.user?.id,
     });
 

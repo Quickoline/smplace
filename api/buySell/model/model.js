@@ -50,6 +50,10 @@ const buySellSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    operationsAdminId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true }
 );

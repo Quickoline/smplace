@@ -122,6 +122,11 @@ export function serializeService(lean) {
 
     createdBy: lean.createdBy != null ? String(lean.createdBy) : null,
 
+    operationsAdminId:
+      lean.operationsAdminId != null
+        ? String(lean.operationsAdminId)
+        : null,
+
     createdAt: lean.createdAt,
 
     updatedAt: lean.updatedAt,
@@ -145,6 +150,8 @@ export const createService = async ({
   price,
 
   requirements,
+
+  operationsAdminId,
 
   userId,
 
@@ -267,6 +274,12 @@ export const updateService = async (id, payload) => {
   if (payload.requirements !== undefined) {
 
     $set.requirements = payload.requirements;
+
+  }
+
+  if (payload.operationsAdminId !== undefined) {
+
+    $set.operationsAdminId = payload.operationsAdminId || null;
 
   }
 

@@ -56,7 +56,7 @@ export const loginController = async (req, res) => {
 
 export const createAdminController = async (req, res) => {
   try {
-    const { email, employeeId, password, phone, phoneLast4, qrCodeUrl } =
+    const { email, employeeId, password, phone, phoneLast4, qrCodeUrl, role } =
       req.body;
 
     const result = await createAdminBySuperAdmin({
@@ -66,6 +66,7 @@ export const createAdminController = async (req, res) => {
       phone,
       phoneLast4,
       qrCodeUrl,
+      role,
       createdBy: req.user.id,
     });
 

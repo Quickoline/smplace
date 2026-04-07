@@ -6,7 +6,10 @@ import {
   updateServiceController,
   deleteServiceController,
 } from "../controller/controller.js";
-import { authenticate, requireRole } from "../../../auth/middleware/middleware.js";
+import {
+  authenticate,
+  requireCatalogStaff,
+} from "../../../auth/middleware/middleware.js";
 
 const router = Router();
 
@@ -18,21 +21,21 @@ router.get("/:id", getServiceController);
 router.post(
   "/",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   createServiceController
 );
 
 router.put(
   "/:id",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   updateServiceController
 );
 
 router.delete(
   "/:id",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   deleteServiceController
 );
 

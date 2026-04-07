@@ -8,7 +8,10 @@ import {
   addRatingController,
   verifyAdminPhoneController,
 } from "../controller/controller.js";
-import { authenticate, requireRole } from "../../../auth/middleware/middleware.js";
+import {
+  authenticate,
+  requireOrderStaff,
+} from "../../../auth/middleware/middleware.js";
 
 const router = Router();
 
@@ -23,7 +26,7 @@ router.get("/my", authenticate, listMyOrdersController);
 router.get(
   "/",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireOrderStaff,
   listAllOrdersController
 );
 
@@ -35,7 +38,7 @@ router.get("/:id", authenticate, getOrderController);
 router.patch(
   "/:id/status",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireOrderStaff,
   updateOrderStatusController
 );
 

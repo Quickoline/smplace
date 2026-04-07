@@ -162,19 +162,35 @@ const run = async () => {
     });
     console.log("✓ Superadmin:", superadminEmail, "| _id:", superadmin._id.toString());
 
-    const adminEmail = "admin@test.com";
-    const adminPassword = "Admin123";
-    const adminResult = await createAdminBySuperAdmin({
-      email: adminEmail,
-      employeeId: "EMP001",
-      password: adminPassword,
+    const seniorEmail = "senior@test.com";
+    const seniorPassword = "Senior123";
+    const seniorResult = await createAdminBySuperAdmin({
+      email: seniorEmail,
+      employeeId: "EMP-SENIOR",
+      password: seniorPassword,
       phone: "9876543210",
       phoneLast4: "3210",
       qrCodeUrl: null,
+      role: "senior_admin",
       createdBy: superadmin._id,
     });
-    const admin = adminResult.admin;
-    console.log("✓ Admin:", adminEmail, "| _id:", admin._id.toString());
+    const senior = seniorResult.admin;
+    console.log("✓ Senior admin:", seniorEmail, "| _id:", senior._id.toString());
+
+    const opsEmail = "ops@test.com";
+    const opsPassword = "Ops12345";
+    const opsResult = await createAdminBySuperAdmin({
+      email: opsEmail,
+      employeeId: "EMP-OPS",
+      password: opsPassword,
+      phone: "9876543211",
+      phoneLast4: "3211",
+      qrCodeUrl: null,
+      role: "service_admin",
+      createdBy: superadmin._id,
+    });
+    const ops = opsResult.admin;
+    console.log("✓ Service admin:", opsEmail, "| _id:", ops._id.toString());
 
     const userEmail = "user@test.com";
     const userPassword = "User123";
@@ -225,7 +241,8 @@ const run = async () => {
         description: row.description,
         price: row.price,
         requirements: row.requirements,
-        userId: admin._id,
+        operationsAdminId: ops._id,
+        userId: senior._id,
       });
       createdServices.push(svc);
       console.log(
@@ -244,7 +261,8 @@ const run = async () => {
     for (const row of BUYSELL_SEEDS) {
       await createListing({
         ...row,
-        userId: admin._id,
+        operationsAdminId: ops._id,
+        userId: senior._id,
       });
       console.log("  + Buy/Sell:", row.title);
     }
@@ -291,7 +309,7 @@ const run = async () => {
     );
 
     console.log("\n--- Seed complete ---");
-    console.log("Login:", superadminEmail, "|", adminEmail, "|", userEmail);
+    console.log("Login:", superadminEmail, "|", seniorEmail, "|", opsEmail, "|", userEmail);
   } catch (error) {
     console.error("Seed error:", error.message);
     console.error(error);

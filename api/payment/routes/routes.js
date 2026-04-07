@@ -5,7 +5,10 @@ import {
   listPaymentsController,
   verifyPaymentController,
 } from "../controller/controller.js";
-import { authenticate, requireRole } from "../../../auth/middleware/middleware.js";
+import {
+  authenticate,
+  requireOrderStaff,
+} from "../../../auth/middleware/middleware.js";
 
 const router = Router();
 
@@ -14,7 +17,7 @@ const router = Router();
 router.post(
   "/",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireOrderStaff,
   createPaymentController
 );
 
@@ -28,7 +31,7 @@ router.get("/order/:orderId/list", authenticate, listPaymentsController);
 router.post(
   "/:id/verify",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireOrderStaff,
   verifyPaymentController
 );
 

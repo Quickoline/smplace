@@ -7,6 +7,7 @@ export const createListing = async ({
   price,
   serviceCategory,
   requirements,
+  operationsAdminId,
   userId,
 }) => {
   if (!title || !type || !description || price == null) {
@@ -20,6 +21,7 @@ export const createListing = async ({
     price,
     serviceCategory,
     requirements,
+    operationsAdminId: operationsAdminId || undefined,
     createdBy: userId,
   });
 
@@ -50,6 +52,9 @@ export const updateListing = async (id, payload) => {
         serviceCategory: payload.serviceCategory,
         requirements: payload.requirements,
         status: payload.status,
+        ...(payload.operationsAdminId !== undefined
+          ? { operationsAdminId: payload.operationsAdminId || null }
+          : {}),
       },
     },
     { new: true, runValidators: true }

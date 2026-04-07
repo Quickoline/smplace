@@ -1,4 +1,9 @@
 import jwt from "jsonwebtoken";
+import {
+  canManageCatalog,
+  canManageOrders,
+  canUseStaffCategoryTree,
+} from "../roles.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "change_me_in_production";
 
@@ -33,4 +38,28 @@ export const requireRole = (...roles) => {
     }
     next();
   };
+};
+
+/** Services, categories, buy/sell listings (catalog) */
+export const requireCatalogStaff = (req, res, next) => {
+  if (!req.user || !canManageCatalog(req.user.role)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  next();
+};
+
+/** Orders, payments, status updates */
+export const requireOrderStaff = (req, res, next) => {
+  if (!req.user || !canManageOrders(req.user.role)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  next();
+};
+
+/** Category tree for admin apps (senior sees own listings; ops sees assigned services) */
+export const requireStaffCategoryTree = (req, res, next) => {
+  if (!req.user || !canUseStaffCategoryTree(req.user.role)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  next();
 };

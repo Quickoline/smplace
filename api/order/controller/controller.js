@@ -7,6 +7,10 @@ import {
   addRating,
   verifyAdminPhoneLast4,
 } from "../services/services.js";
+import {
+  canManageOrders,
+  isSuperadmin,
+} from "../../../auth/roles.js";
 
 export const createOrderController = async (req, res) => {
   try {
@@ -51,18 +55,26 @@ export const getOrderController = async (req, res) => {
     const userId = req.user.id;
     const role = req.user.role;
 
-    if (role === "user" && String(order.createdBy) !== String(userId)) {
-      return res.status(403).json({ message: "Not allowed to view this order" });
+    if (role === "user") {
+      if (String(order.createdBy) !== String(userId)) {
+        return res.status(403).json({ message: "Not allowed to view this order" });
+      }
+      return res.status(200).json({ order });
+    }
+
+    if (isSuperadmin(role)) {
+      return res.status(200).json({ order });
     }
 
     if (
-      role === "admin" &&
-      (!order.provider || String(order.provider) !== String(userId))
+      canManageOrders(role) &&
+      order.provider &&
+      String(order.provider) === String(userId)
     ) {
-      return res.status(403).json({ message: "Not allowed to view this order" });
+      return res.status(200).json({ order });
     }
 
-    res.status(200).json({ order });
+    return res.status(403).json({ message: "Not allowed to view this order" });
   } catch (error) {
     res.status(404).json({ message: error.message });
   }
@@ -89,7 +101,12 @@ export const verifyAdminPhoneController = async (req, res) => {
 export const updateOrderStatusController = async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await updateOrderStatus(req.params.id, status);
+    const order = await updateOrderStatus(
+      req.params.id,
+      status,
+      req.user.id,
+      req.user.role
+    );
     res.status(200).json({ message: "Order status updated", order });
   } catch (error) {
     res.status(400).json({ message: error.message });

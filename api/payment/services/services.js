@@ -2,6 +2,7 @@ import Razorpay from "razorpay";
 import { Payment } from "../model/model.js";
 import { Order } from "../../order/model/model.js";
 import { User } from "../../../auth/model/model.js";
+import { isSuperadmin } from "../../../auth/roles.js";
 import { WalletTransaction } from "../../wallet/model/model.js";
 
 const getRazorpay = () => {
@@ -99,9 +100,8 @@ export const getPaymentByOrder = async (orderId, userId, role) => {
 
   const isUser = order.createdBy && String(order.createdBy) === String(userId);
   const isAdmin = order.provider && String(order.provider) === String(userId);
-  const isSuperadmin = role === "superadmin";
 
-  if (!isUser && !isAdmin && !isSuperadmin) {
+  if (!isUser && !isAdmin && !isSuperadmin(role)) {
     throw new Error("Not allowed to view this payment");
   }
 
@@ -131,23 +131,25 @@ export const listPaymentsByOrder = async (orderId, userId, role) => {
 
   const isUser = order.createdBy && String(order.createdBy) === String(userId);
   const isAdmin = order.provider && String(order.provider) === String(userId);
-  const isSuperadmin = role === "superadmin";
 
-  if (!isUser && !isAdmin && !isSuperadmin) {
+  if (!isUser && !isAdmin && !isSuperadmin(role)) {
     throw new Error("Not allowed to view payments for this order");
   }
 
   return Payment.find({ order: orderId }).sort({ createdAt: -1 });
 };
 
-export const verifyPayment = async (paymentId, adminId) => {
+export const verifyPayment = async (paymentId, adminId, role) => {
   const payment = await Payment.findById(paymentId);
   if (!payment) throw new Error("Payment not found");
 
   const order = await Order.findById(payment.order);
   if (!order) throw new Error("Order not found");
 
-  if (String(order.provider) !== String(adminId)) {
+  if (
+    !isSuperadmin(role) &&
+    String(order.provider) !== String(adminId)
+  ) {
     throw new Error("Only the order provider can verify this payment");
   }
 

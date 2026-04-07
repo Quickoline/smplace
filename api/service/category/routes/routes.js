@@ -9,7 +9,11 @@ import {
   removeSubcategoryController,
   adminCategoriesWithServicesController,
 } from "../controller/controller.js";
-import { authenticate, requireRole } from "../../../../auth/middleware/middleware.js";
+import {
+  authenticate,
+  requireCatalogStaff,
+  requireStaffCategoryTree,
+} from "../../../../auth/middleware/middleware.js";
 
 const router = Router();
 
@@ -20,7 +24,7 @@ router.get("/public", listCategoriesController);
 router.get(
   "/admin/with-services",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireStaffCategoryTree,
   adminCategoriesWithServicesController
 );
 
@@ -28,48 +32,48 @@ router.get(
 router.get(
   "/",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   listCategoriesController
 );
 router.post(
   "/",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   createCategoryController
 );
 
 router.get(
   "/:id",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   getCategoryController
 );
 
 router.put(
   "/:id",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   updateCategoryController
 );
 
 router.delete(
   "/:id",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   deleteCategoryController
 );
 
 router.post(
   "/:id/subcategories",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   addSubcategoryController
 );
 
 router.delete(
   "/:id/subcategories/:subId",
   authenticate,
-  requireRole("admin", "superadmin"),
+  requireCatalogStaff,
   removeSubcategoryController
 );
 

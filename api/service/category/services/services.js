@@ -1,5 +1,10 @@
 import { ServiceCategory } from "../model/model.js";
 import { Service } from "../../model/model.js";
+import {
+  canManageCatalog,
+  canManageOrders,
+  isSuperadmin,
+} from "../../../../auth/roles.js";
 
 export const createCategory = async ({ name, subcategories }) => {
   if (!name) {
@@ -98,8 +103,21 @@ export const removeSubcategory = async (id, subcategoryId) => {
 /**
  * Admin tree: categories with nested subcategories and services (by categoryId / subcategoryId).
  */
-export const listAdminCategoriesWithServices = async (adminId) => {
-  const services = await Service.find({ createdBy: adminId })
+export const listAdminCategoriesWithServices = async (adminId, role) => {
+  let serviceFilter;
+  if (isSuperadmin(role)) {
+    serviceFilter = {};
+  } else if (canManageCatalog(role)) {
+    serviceFilter = { createdBy: adminId };
+  } else if (canManageOrders(role)) {
+    serviceFilter = {
+      $or: [{ createdBy: adminId }, { operationsAdminId: adminId }],
+    };
+  } else {
+    return [];
+  }
+
+  const services = await Service.find(serviceFilter)
     .populate("categoryId")
     .sort({ createdAt: -1 })
     .lean();

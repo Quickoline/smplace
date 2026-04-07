@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../model/model.js";
+import {
+  normalizeCreatableStaffRole,
+  STAFF_LOGIN_WITH_EMPLOYEE_ID,
+} from "../roles.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "change_me_in_production";
 const JWT_EXPIRES_IN = "7d";
@@ -54,15 +58,15 @@ export const loginUserOrAdmin = async ({
     throw new Error("phone is required for user login");
   }
 
-  if (role === "admin" && !employeeId) {
-    throw new Error("employeeId is required for admin login");
+  if (STAFF_LOGIN_WITH_EMPLOYEE_ID.has(role) && !employeeId) {
+    throw new Error("employeeId is required for staff login");
   }
 
   const query = { email, role };
   if (role === "user") {
     query.phone = phone;
   }
-  if (role === "admin") {
+  if (STAFF_LOGIN_WITH_EMPLOYEE_ID.has(role)) {
     query.employeeId = employeeId;
   }
 
@@ -88,6 +92,7 @@ export const createAdminBySuperAdmin = async ({
   phoneLast4,
   qrCodeUrl,
   createdBy,
+  role: staffRole,
 }) => {
   if (!email || !employeeId || !password) {
     throw new Error("email, employeeId and password are required");
@@ -108,6 +113,7 @@ export const createAdminBySuperAdmin = async ({
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const role = normalizeCreatableStaffRole(staffRole);
 
   const admin = await User.create({
     email,
@@ -116,7 +122,7 @@ export const createAdminBySuperAdmin = async ({
     phoneLast4: String(phoneLast4).slice(0, 4),
     qrCodeUrl: qrCodeUrl || null,
     passwordHash,
-    role: "admin",
+    role,
   });
 
   const token = generateToken(admin);

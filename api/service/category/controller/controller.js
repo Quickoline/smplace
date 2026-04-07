@@ -78,7 +78,10 @@ export const removeSubcategoryController = async (req, res) => {
 export const adminCategoriesWithServicesController = async (req, res) => {
   try {
     const adminId = req.user.id;
-    const categories = await listAdminCategoriesWithServices(adminId);
+    const categories = await listAdminCategoriesWithServices(
+      adminId,
+      req.user.role
+    );
     res.status(200).json({ categories });
   } catch (error) {
     res.status(400).json({ message: error.message });

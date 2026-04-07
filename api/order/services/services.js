@@ -33,13 +33,16 @@ export const createOrder = async ({
     throw new Error("Related service not found");
   }
 
+  const providerId =
+    serviceDoc.operationsAdminId || serviceDoc.createdBy || null;
+
   const order = await Order.create({
     customerName: user.email,
     phone: user.phone,
     service: serviceId,
     serviceModel,
     createdBy: userId,
-    provider: serviceDoc.createdBy,
+    provider: providerId,
   });
 
   return order.populate("service");
@@ -64,18 +67,18 @@ export const getOrderById = async (id) => {
   return order;
 };
 
-export const updateOrderStatus = async (id, status) => {
-  const order = await Order.findByIdAndUpdate(
-    id,
-    { $set: { status } },
-    { new: true, runValidators: true }
-  ).populate("service");
-
+export const updateOrderStatus = async (id, status, actorId, role) => {
+  const order = await Order.findById(id);
   if (!order) {
     throw new Error("Order not found");
   }
+  if (role !== "superadmin" && String(order.provider) !== String(actorId)) {
+    throw new Error("Not allowed to update this order");
+  }
 
-  return order;
+  order.status = status;
+  await order.save();
+  return Order.findById(order._id).populate("service");
 };
 
 export const addRating = async (id, rating, ratingComment, userId) => {
