@@ -17,10 +17,14 @@ import {
 
 const router = Router();
 
-// Public: list categories for user to select
+// --- Public GET (no auth): list + single category ---
+// Canonical: GET /categories  (also mounted at /service-categories for compatibility)
+router.get("/", listCategoriesController);
+
+// Legacy alias — same payload as GET /
 router.get("/public", listCategoriesController);
 
-// Admin view: categories / subcategories with his services (before :id)
+// Staff tree (before /:id)
 router.get(
   "/admin/with-services",
   authenticate,
@@ -28,25 +32,14 @@ router.get(
   adminCategoriesWithServicesController
 );
 
-// Admin CRUD for categories & subcategories (same roles as /services writes)
-router.get(
-  "/",
-  authenticate,
-  requireCatalogStaff,
-  listCategoriesController
-);
+router.get("/:id", getCategoryController);
+
+// --- Catalog staff (mutations + authenticated reads not needed for list) ---
 router.post(
   "/",
   authenticate,
   requireCatalogStaff,
   createCategoryController
-);
-
-router.get(
-  "/:id",
-  authenticate,
-  requireCatalogStaff,
-  getCategoryController
 );
 
 router.put(
@@ -78,4 +71,3 @@ router.delete(
 );
 
 export default router;
-

@@ -11,6 +11,8 @@ import orderRoutes from "./api/order/routes/routes.js";
 import chatRoutes from "./api/chat/routes/routes.js";
 import paymentRoutes from "./api/payment/routes/routes.js";
 import walletRoutes from "./api/wallet/routes/routes.js";
+import contactRoutes from "./api/contact/routes/routes.js";
+import feedbackRoutes from "./api/feedback/routes/routes.js";
 import { initSocket } from "./realtime/socket.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -80,11 +82,14 @@ app.get("/", (req, res) => {
 app.use("/auth", authRoutes);
 app.use("/services", serviceRoutes);
 app.use("/buy-sell", buySellRoutes);
+app.use("/categories", serviceCategoryRoutes);
 app.use("/service-categories", serviceCategoryRoutes);
 app.use("/orders", orderRoutes);
 app.use("/chat", chatRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/wallet", walletRoutes);
+app.use("/contact", contactRoutes);
+app.use("/feedback", feedbackRoutes);
 
 const start = async () => {
   try {

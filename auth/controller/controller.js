@@ -2,6 +2,8 @@ import {
   registerUser,
   loginUserOrAdmin,
   createAdminBySuperAdmin,
+  getUserProfile,
+  updateUserProfile,
 } from "../services/services.js";
 
 export const registerUserController = async (req, res) => {
@@ -14,6 +16,7 @@ export const registerUserController = async (req, res) => {
       user: {
         id: result.user._id,
         email: result.user.email,
+        name: result.user.name ?? null,
         phone: result.user.phone,
         role: result.user.role,
       },
@@ -41,6 +44,7 @@ export const loginController = async (req, res) => {
       user: {
         id: result.user._id,
         email: result.user.email,
+        name: result.user.name ?? null,
         phone: result.user.phone,
         employeeId: result.user.employeeId,
         phoneLast4: result.user.phoneLast4,
@@ -82,6 +86,33 @@ export const createAdminController = async (req, res) => {
         role: result.admin.role,
       },
       token: result.token,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const getProfileController = async (req, res) => {
+  try {
+    const user = await getUserProfile(req.user.id);
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
+
+export const updateProfileController = async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    if (name === undefined && phone === undefined) {
+      return res.status(400).json({
+        message: "Provide at least one of: name, phone",
+      });
+    }
+    const user = await updateUserProfile(req.user.id, { name, phone });
+    res.status(200).json({
+      message: "Profile updated",
+      user,
     });
   } catch (error) {
     res.status(400).json({ message: error.message });

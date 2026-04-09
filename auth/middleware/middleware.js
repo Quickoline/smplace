@@ -63,3 +63,28 @@ export const requireStaffCategoryTree = (req, res, next) => {
   }
   next();
 };
+
+/** Sets req.user when a valid Bearer token is sent; otherwise req.user is undefined. */
+export const optionalAuthenticate = (req, res, next) => {
+  let authHeader = req.headers.authorization;
+  const rawAlt =
+    req.headers["x-auth-token"] || req.headers["x-access-token"];
+  const alt = Array.isArray(rawAlt) ? rawAlt[0] : rawAlt;
+  if ((!authHeader || !authHeader.startsWith("Bearer ")) && alt) {
+    authHeader = `Bearer ${String(alt).trim()}`;
+  }
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    req.user = undefined;
+    return next();
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+  } catch {
+    req.user = undefined;
+  }
+  next();
+};

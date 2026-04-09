@@ -4,6 +4,8 @@ import {
   loginController,
   createAdminController,
   uploadQrController,
+  getProfileController,
+  updateProfileController,
 } from "../controller/controller.js";
 import { authenticate, requireRole } from "../middleware/middleware.js";
 import { uploadQr } from "../../utils/upload_qr.js";
@@ -16,6 +18,10 @@ router.post("/register", registerUserController);
 // Login for both user and admin
 // body: { email, password, role, phone? (for user), employeeId? (for admin) }
 router.post("/login", loginController);
+
+// Authenticated profile (all roles)
+router.get("/profile", authenticate, getProfileController);
+router.put("/profile", authenticate, updateProfileController);
 
 // Upload QR for admin (superadmin) - multipart file
 router.post(

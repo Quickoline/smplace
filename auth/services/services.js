@@ -126,3 +126,44 @@ export const createAdminBySuperAdmin = async ({
   const token = generateToken(admin);
   return { admin, token };
 };
+
+const serializePublicUser = (doc) => {
+  if (!doc) return null;
+  const u = doc.toObject ? doc.toObject() : doc;
+  return {
+    id: u._id?.toString?.() ?? String(u._id),
+    email: u.email,
+    name: u.name ?? null,
+    phone: u.phone ?? null,
+    role: u.role,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt,
+  };
+};
+
+export const getUserProfile = async (userId) => {
+  const user = await User.findById(userId).select("-passwordHash").lean();
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return serializePublicUser(user);
+};
+
+export const updateUserProfile = async (userId, { name, phone }) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (name !== undefined) {
+    const n = String(name).trim();
+    user.name = n.length > 0 ? n.slice(0, 120) : undefined;
+  }
+  if (phone !== undefined) {
+    const p = String(phone).trim();
+    user.phone = p.length > 0 ? p : undefined;
+  }
+
+  await user.save();
+  return getUserProfile(userId);
+};

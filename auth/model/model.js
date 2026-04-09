@@ -11,6 +11,11 @@ const userSchema = new Schema(
       lowercase: true,
       trim: true,
     },
+    name: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+    },
     phone: {
       type: String,
     },
