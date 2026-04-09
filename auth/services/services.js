@@ -54,17 +54,15 @@ export const loginUserOrAdmin = async ({
     throw new Error("email, password and role are required");
   }
 
-  if (role === "user" && !phone) {
-    throw new Error("phone is required for user login");
-  }
-
   if (STAFF_LOGIN_WITH_EMPLOYEE_ID.has(role) && !employeeId) {
     throw new Error("employeeId is required for staff login");
   }
 
   const query = { email, role };
   if (role === "user") {
-    query.phone = phone;
+    if (phone) {
+      query.phone = phone;
+    }
   }
   if (STAFF_LOGIN_WITH_EMPLOYEE_ID.has(role)) {
     query.employeeId = employeeId;
