@@ -1,6 +1,7 @@
 import { Message } from "../model/model.js";
 import { Order } from "../../order/model/model.js";
 import { getIO } from "../../../realtime/socket.js";
+import { signMediaUrlIfNeeded } from "../../../config/aws.js";
 
 const ensureParticipant = (order, userId) => {
   const isUser =
@@ -15,13 +16,21 @@ const ensureParticipant = (order, userId) => {
   return { isUser, isAdmin };
 };
 
-const inferMediaType = (mimetype) => {
-  if (!mimetype) return "";
+export const inferMediaTypeFromMime = (mimetype) => {
+  if (!mimetype) return "document";
   if (mimetype.startsWith("image/")) return "image";
   if (mimetype.startsWith("video/")) return "video";
   if (mimetype.startsWith("audio/")) return "audio";
   return "document";
 };
+
+async function withSignedMediaUrl(doc) {
+  const plain = doc.toObject ? doc.toObject() : { ...doc };
+  if (plain.mediaUrl) {
+    plain.mediaUrl = await signMediaUrlIfNeeded(plain.mediaUrl);
+  }
+  return plain;
+}
 
 export const sendMessage = async ({
   orderId,
@@ -29,6 +38,7 @@ export const sendMessage = async ({
   body,
   mediaUrl,
   mediaType,
+  mimeType,
 }) => {
   if (!orderId || !from) {
     throw new Error("orderId and from are required");
@@ -47,13 +57,18 @@ export const sendMessage = async ({
 
   const to = isUser ? order.provider : order.createdBy;
 
+  const resolvedMediaType =
+    mediaType ||
+    (mediaUrl && mimeType ? inferMediaTypeFromMime(mimeType) : "") ||
+    (mediaUrl ? "document" : "");
+
   const msg = await Message.create({
     order: orderId,
     from,
     to,
     body: body || "",
     mediaUrl: mediaUrl || undefined,
-    mediaType: mediaType || (mediaUrl ? inferMediaType(null) : ""),
+    mediaType: resolvedMediaType,
   });
 
   const populated = await Message.findById(msg._id)
@@ -63,10 +78,11 @@ export const sendMessage = async ({
 
   const io = getIO();
   if (io) {
-    io.to(`order:${orderId}`).emit("chat:message", populated);
+    const payload = await withSignedMediaUrl(populated);
+    io.to(`order:${orderId}`).emit("chat:message", payload);
   }
 
-  return populated;
+  return withSignedMediaUrl(populated);
 };
 
 export const listMessages = async ({ orderId, userId }) => {
@@ -82,6 +98,10 @@ export const listMessages = async ({ orderId, userId }) => {
     .populate("from", "email role")
     .populate("to", "email role");
 
-  return messages;
+  const out = [];
+  for (const m of messages) {
+    out.push(await withSignedMediaUrl(m));
+  }
+  return out;
 };
 

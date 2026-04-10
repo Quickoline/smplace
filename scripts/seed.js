@@ -32,6 +32,7 @@ const SERVICE_SEEDS = [
     description: "React/Node or similar stack; API, auth, deployment.",
     price: 8500,
     requirements: "Scope document, brand assets",
+    included: "Source handover, 2 weeks post-launch bugfix window, deployment notes.",
   },
   {
     name: "Mobile App (iOS & Android)",
@@ -40,6 +41,7 @@ const SERVICE_SEEDS = [
     description: "Flutter or native builds, store submission support.",
     price: 12000,
     requirements: "Designs or wireframes",
+    included: "Store listings draft, build artifacts, basic analytics hookup.",
   },
   {
     name: "Contract Drafting & Review",
@@ -48,6 +50,7 @@ const SERVICE_SEEDS = [
     description: "NDAs, MSAs, employment agreements reviewed by counsel.",
     price: 3500,
     requirements: "Existing drafts or bullet points",
+    included: "One revision round, redlined PDF, short summary email.",
   },
   {
     name: "Company Registration & Compliance",
@@ -56,6 +59,7 @@ const SERVICE_SEEDS = [
     description: "Incorporation, GST, basic statutory filings.",
     price: 9000,
     requirements: "Director KYC, proposed name",
+    included: "Certificate of incorporation, PAN application support, checklist.",
   },
   {
     name: "Brand Identity Package",
@@ -64,6 +68,7 @@ const SERVICE_SEEDS = [
     description: "Logo, color system, typography, brand guidelines PDF.",
     price: 15000,
     requirements: "Brief and references",
+    included: "Logo files (SVG/PNG), color tokens, 1-page brand one-pager.",
   },
   {
     name: "UI/UX for SaaS",
@@ -72,6 +77,7 @@ const SERVICE_SEEDS = [
     description: "Figma screens, design system, handoff to dev.",
     price: 22000,
     requirements: "User flows, content outline",
+    included: "Figma library, component specs, export-ready assets.",
   },
   {
     name: "Technical Hiring — Screening",
@@ -80,6 +86,7 @@ const SERVICE_SEEDS = [
     description: "JD refinement, take-home design, interview panel coordination.",
     price: 4500,
     requirements: "Role level, stack, salary band",
+    included: "Scorecard template, 5 candidate reviews, debrief notes.",
   },
   {
     name: "Executive Search",
@@ -88,6 +95,7 @@ const SERVICE_SEEDS = [
     description: "Senior roles; shortlist and reference checks.",
     price: 75000,
     requirements: "Mandate and compensation range",
+    included: "Longlist, shortlist of 3–5, structured references.",
   },
   {
     name: "Business Strategy Workshop",
@@ -96,6 +104,7 @@ const SERVICE_SEEDS = [
     description: "2-day workshop + written recommendations.",
     price: 18000,
     requirements: "Financial summary, goals",
+    included: "Workshop materials, 10-page recommendations memo.",
   },
   {
     name: "Process & Ops Consulting",
@@ -104,6 +113,7 @@ const SERVICE_SEEDS = [
     description: "SOP mapping, tooling recommendations, KPIs.",
     price: 25000,
     requirements: "Team size, current tools",
+    included: "Process maps, KPI dashboard sketch, follow-up call.",
   },
   {
     name: "B2B SaaS Listing — Acquisition",
@@ -112,6 +122,7 @@ const SERVICE_SEEDS = [
     description: "Advisory for buying or selling a small B2B SaaS.",
     price: 50000,
     requirements: "NDA, high-level metrics",
+    included: "Teaser, buyer/seller intro pack, diligence checklist.",
   },
 ];
 
@@ -241,6 +252,7 @@ const run = async () => {
         description: row.description,
         price: row.price,
         requirements: row.requirements,
+        included: row.included,
         operationsAdminId: ops._id,
         userId: senior._id,
       });

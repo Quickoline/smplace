@@ -31,6 +31,10 @@ const serviceSchema = new Schema(
       type: String,
       trim: true,
     },
+    included: {
+      type: String,
+      trim: true,
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",

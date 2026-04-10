@@ -15,6 +15,7 @@ export const createServiceController = async (req, res) => {
       description,
       price,
       requirements,
+      included,
       operationsAdminId,
     } = req.body;
     const service = await createService({
@@ -24,6 +25,7 @@ export const createServiceController = async (req, res) => {
       description,
       price,
       requirements,
+      included,
       operationsAdminId,
       userId: req.user?.id,
     });
