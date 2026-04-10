@@ -20,6 +20,14 @@ export const STAFF_LOGIN_WITH_EMPLOYEE_ID = new Set([
   ROLES.SERVICE_ADMIN,
 ]);
 
+/** Admin app: sign in with email + password only (role comes from the account) */
+export const STAFF_EMAIL_LOGIN_ROLES = new Set([
+  ROLES.ADMIN,
+  ROLES.SENIOR_ADMIN,
+  ROLES.SERVICE_ADMIN,
+  ROLES.SUPERADMIN,
+]);
+
 export const isSuperadmin = (role) => role === ROLES.SUPERADMIN;
 
 export const canManageCatalog = (role) => CATALOG.has(role);

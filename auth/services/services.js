@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { User } from "../model/model.js";
 import {
   normalizeCreatableStaffRole,
+  STAFF_EMAIL_LOGIN_ROLES,
   STAFF_LOGIN_WITH_EMPLOYEE_ID,
 } from "../roles.js";
 
@@ -70,6 +71,27 @@ export const loginUserOrAdmin = async ({
 
   const user = await User.findOne(query);
   if (!user) {
+    throw new Error("Invalid credentials");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!isMatch) {
+    throw new Error("Invalid credentials");
+  }
+
+  const token = generateToken(user);
+  return { user, token };
+};
+
+/** Admin mobile/web: email + password; account must be a staff role (not `user`). */
+export const loginStaffByEmailPassword = async ({ email, password }) => {
+  if (!email || !password) {
+    throw new Error("email and password are required");
+  }
+
+  const e = String(email).trim().toLowerCase();
+  const user = await User.findOne({ email: e });
+  if (!user || !STAFF_EMAIL_LOGIN_ROLES.has(user.role)) {
     throw new Error("Invalid credentials");
   }
 

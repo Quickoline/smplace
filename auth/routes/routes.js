@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   registerUserController,
   loginController,
+  adminLoginController,
   createAdminController,
   uploadQrController,
   getProfileController,
@@ -18,6 +19,9 @@ router.post("/register", registerUserController);
 // Login for both user and admin
 // body: { email, password, role, phone? (for user), employeeId? (for admin) }
 router.post("/login", loginController);
+
+// Admin app: staff only — body: { email, password }
+router.post("/admin/login", adminLoginController);
 
 // Authenticated profile (all roles)
 router.get("/profile", authenticate, getProfileController);

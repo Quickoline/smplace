@@ -1,6 +1,7 @@
 import {
   registerUser,
   loginUserOrAdmin,
+  loginStaffByEmailPassword,
   createAdminBySuperAdmin,
   getUserProfile,
   updateUserProfile,
@@ -38,6 +39,31 @@ export const loginController = async (req, res) => {
       phone,
       employeeId,
     });
+
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        id: result.user._id,
+        email: result.user.email,
+        name: result.user.name ?? null,
+        phone: result.user.phone,
+        employeeId: result.user.employeeId,
+        phoneLast4: result.user.phoneLast4,
+        qrCodeUrl: result.user.qrCodeUrl,
+        role: result.user.role,
+      },
+      token: result.token,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const adminLoginController = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const result = await loginStaffByEmailPassword({ email, password });
 
     res.status(200).json({
       message: "Login successful",
