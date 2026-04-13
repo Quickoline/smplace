@@ -80,18 +80,24 @@ app.get("/", (req, res) => {
   res.json({ message: "Service Marketplace Backend running" });
 });
 
-app.use("/auth", authRoutes);
-app.use("/services", serviceRoutes);
-app.use("/buy-sell", buySellRoutes);
-app.use("/categories", serviceCategoryRoutes);
-app.use("/service-categories", serviceCategoryRoutes);
-app.use("/orders", orderRoutes);
-app.use("/chat", chatRoutes);
-app.use("/payments", paymentRoutes);
-app.use("/wallet", walletRoutes);
-app.use("/contact", contactRoutes);
-app.use("/feedback", feedbackRoutes);
-app.use("/onboarding", onboardingRoutes);
+/** Mount router at [path] and at `/api` + path so clients can use base `https://host/api`. */
+const alsoApi = (path, router) => {
+  app.use(path, router);
+  app.use(`/api${path}`, router);
+};
+
+alsoApi("/auth", authRoutes);
+alsoApi("/services", serviceRoutes);
+alsoApi("/buy-sell", buySellRoutes);
+alsoApi("/categories", serviceCategoryRoutes);
+alsoApi("/service-categories", serviceCategoryRoutes);
+alsoApi("/orders", orderRoutes);
+alsoApi("/chat", chatRoutes);
+alsoApi("/payments", paymentRoutes);
+alsoApi("/wallet", walletRoutes);
+alsoApi("/contact", contactRoutes);
+alsoApi("/feedback", feedbackRoutes);
+alsoApi("/onboarding", onboardingRoutes);
 
 const start = async () => {
   try {
