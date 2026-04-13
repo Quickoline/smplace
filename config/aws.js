@@ -222,17 +222,34 @@ export const getSignedUrl = async (fileKey, expiresIn = 3600) => {
   };
 
   try {
-    return await s3.getSignedUrlPromise("getObject", params);
+    if (typeof s3.getSignedUrlPromise === "function") {
+      return await s3.getSignedUrlPromise("getObject", params);
+    }
+    return s3.getSignedUrl("getObject", params);
   } catch (error) {
     console.error("Error generating signed URL:", error);
     throw new Error(`Failed to generate signed URL: ${error.message}`);
   }
 };
 
-/** Extract key from full S3 HTTPS URL */
+/** Extract object key from common S3 HTTPS URL shapes (virtual-hosted + path-style). */
 export function extractKeyFromS3Url(fileUrl) {
   if (!fileUrl || typeof fileUrl !== "string") return null;
   if (!fileUrl.includes("amazonaws.com")) return null;
+  try {
+    const u = new URL(fileUrl);
+    const host = u.hostname || "";
+    const path = (u.pathname || "").replace(/^\/+/, "");
+    // Path-style: s3.<region>.amazonaws.com/<bucket>/<key...>
+    if (host.startsWith("s3.") && path.includes("/")) {
+      const segments = path.split("/").filter(Boolean);
+      if (segments.length >= 2 && BUCKET_NAME && segments[0] === BUCKET_NAME) {
+        return segments.slice(1).join("/") || null;
+      }
+    }
+  } catch {
+    /* fall through */
+  }
   const parts = fileUrl.split(".com/");
   const pathPart = parts[parts.length - 1];
   if (!pathPart) return null;

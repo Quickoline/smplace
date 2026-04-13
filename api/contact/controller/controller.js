@@ -1,6 +1,6 @@
 import {
   createContactSubmission,
-  listContactSubmissions,
+  listContactSubmissionsForAdmin,
 } from "../services/services.js";
 import { saveContactAttachment } from "../../../utils/mediaUpload.js";
 
@@ -45,7 +45,7 @@ export const createContactController = async (req, res) => {
 
 export const listContactsController = async (req, res) => {
   try {
-    const items = await listContactSubmissions();
+    const items = await listContactSubmissionsForAdmin(req);
     res.status(200).json({ contacts: items });
   } catch (error) {
     res.status(500).json({ message: error.message });
