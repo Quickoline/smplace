@@ -70,8 +70,8 @@ export const createOrder = async ({
     throw new Error("Related service not found");
   }
 
-  const providerId =
-    serviceDoc.operationsAdminId || serviceDoc.createdBy || null;
+  const providerId = serviceDoc.createdBy || null;
+  const initialStatus = providerId ? "processing" : "pending";
 
   const order = await Order.create({
     customerName: user.email,
@@ -80,6 +80,7 @@ export const createOrder = async ({
     serviceModel,
     createdBy: userId,
     provider: providerId,
+    status: initialStatus,
   });
 
   return order.populate("service");
@@ -157,38 +158,3 @@ export const addRating = async (id, rating, ratingComment, userId) => {
     .populate("provider", providerSelect);
 };
 
-export const verifyAdminPhoneLast4 = async (id, last4, userId) => {
-  if (!last4 || String(last4).length !== 4) {
-    throw new Error("last4 must be 4 digits");
-  }
-
-  const order = await Order.findById(id).populate("provider");
-
-  if (!order) {
-    throw new Error("Order not found");
-  }
-
-  if (!order.createdBy || order.createdBy.toString() !== String(userId)) {
-    throw new Error("You are not allowed to verify this order");
-  }
-
-  if (!order.provider) {
-    throw new Error("Admin not found for this order");
-  }
-
-  const provider = order.provider;
-  const adminLast4 =
-    provider.phoneLast4 ||
-    (provider.phone ? String(provider.phone).slice(-4) : null);
-
-  if (!adminLast4 || adminLast4 !== String(last4)) {
-    throw new Error("Admin phone verification failed");
-  }
-
-  await Order.findByIdAndUpdate(id, { $set: { status: "processing" } });
-
-  return {
-    ok: true,
-    adminId: order.provider._id,
-  };
-};

@@ -6,7 +6,6 @@ import {
   getOrderController,
   updateOrderStatusController,
   addRatingController,
-  verifyAdminPhoneController,
 } from "../controller/controller.js";
 import {
   authenticate,
@@ -45,14 +44,6 @@ router.patch(
 // Add rating - only creator
 // body: { rating }
 router.patch("/:id/rating", authenticate, addRatingController);
-
-// Verify admin phone last 4 digits before starting chat
-// body: { last4 }
-router.post(
-  "/:id/verify-admin-phone",
-  authenticate,
-  verifyAdminPhoneController
-);
 
 export default router;
 

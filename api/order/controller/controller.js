@@ -5,7 +5,6 @@ import {
   getOrderById,
   updateOrderStatus,
   addRating,
-  verifyAdminPhoneLast4,
 } from "../services/services.js";
 import {
   canManageOrders,
@@ -79,24 +78,6 @@ export const getOrderController = async (req, res) => {
     res.status(404).json({ message: error.message });
   }
 };
-
-export const verifyAdminPhoneController = async (req, res) => {
-  try {
-    const { last4 } = req.body;
-    const result = await verifyAdminPhoneLast4(
-      req.params.id,
-      last4,
-      req.user.id
-    );
-    res.status(200).json({
-      message: "Admin phone verified. You can start chat.",
-      adminId: result.adminId,
-    });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
 
 export const updateOrderStatusController = async (req, res) => {
   try {
