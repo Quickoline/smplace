@@ -43,3 +43,9 @@ export const createFeedbackSubmission = async ({
 
   return doc;
 };
+
+export const listFeedbackSubmissions = async () => {
+  return FeedbackSubmission.find()
+    .sort({ createdAt: -1 })
+    .lean();
+};

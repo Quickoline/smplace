@@ -8,7 +8,7 @@ import {
 } from "../controller/controller.js";
 import {
   authenticate,
-  requireCatalogStaff,
+  requireServiceWriteStaff,
 } from "../../../auth/middleware/middleware.js";
 
 const router = Router();
@@ -21,21 +21,21 @@ router.get("/:id", getServiceController);
 router.post(
   "/",
   authenticate,
-  requireCatalogStaff,
+  requireServiceWriteStaff,
   createServiceController
 );
 
 router.put(
   "/:id",
   authenticate,
-  requireCatalogStaff,
+  requireServiceWriteStaff,
   updateServiceController
 );
 
 router.delete(
   "/:id",
   authenticate,
-  requireCatalogStaff,
+  requireServiceWriteStaff,
   deleteServiceController
 );
 

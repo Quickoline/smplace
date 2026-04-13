@@ -3,6 +3,9 @@ import { Order } from "../../order/model/model.js";
 import { getIO } from "../../../realtime/socket.js";
 import { signMediaUrlIfNeeded } from "../../../config/aws.js";
 
+const STAFF_POPULATE_FIELDS =
+  "email role name phone ratingAverage ratingCount employeeId phoneLast4";
+
 const ensureParticipant = (order, userId) => {
   const isUser =
     order.createdBy && String(order.createdBy) === String(userId);
@@ -72,8 +75,8 @@ export const sendMessage = async ({
   });
 
   const populated = await Message.findById(msg._id)
-    .populate("from", "email role")
-    .populate("to", "email role")
+    .populate("from", STAFF_POPULATE_FIELDS)
+    .populate("to", STAFF_POPULATE_FIELDS)
     .orFail();
 
   const io = getIO();
@@ -95,8 +98,8 @@ export const listMessages = async ({ orderId, userId }) => {
 
   const messages = await Message.find({ order: orderId })
     .sort({ createdAt: 1 })
-    .populate("from", "email role")
-    .populate("to", "email role");
+    .populate("from", STAFF_POPULATE_FIELDS)
+    .populate("to", STAFF_POPULATE_FIELDS);
 
   const out = [];
   for (const m of messages) {

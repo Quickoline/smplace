@@ -46,6 +46,17 @@ const userSchema = new Schema(
       ],
       required: true,
     },
+    /** Aggregated from order ratings where this user is the handling admin (provider). */
+    ratingAverage: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );

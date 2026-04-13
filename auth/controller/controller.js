@@ -51,6 +51,8 @@ export const loginController = async (req, res) => {
         phoneLast4: result.user.phoneLast4,
         qrCodeUrl: result.user.qrCodeUrl,
         role: result.user.role,
+        ratingAverage: result.user.ratingAverage ?? null,
+        ratingCount: result.user.ratingCount ?? 0,
       },
       token: result.token,
     });
@@ -76,6 +78,8 @@ export const adminLoginController = async (req, res) => {
         phoneLast4: result.user.phoneLast4,
         qrCodeUrl: result.user.qrCodeUrl,
         role: result.user.role,
+        ratingAverage: result.user.ratingAverage ?? null,
+        ratingCount: result.user.ratingCount ?? 0,
       },
       token: result.token,
     });

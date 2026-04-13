@@ -1,4 +1,7 @@
-import { createContactSubmission } from "../services/services.js";
+import {
+  createContactSubmission,
+  listContactSubmissions,
+} from "../services/services.js";
 import { saveContactAttachment } from "../../../utils/mediaUpload.js";
 
 export const createContactController = async (req, res) => {
@@ -37,5 +40,14 @@ export const createContactController = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const listContactsController = async (req, res) => {
+  try {
+    const items = await listContactSubmissions();
+    res.status(200).json({ contacts: items });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

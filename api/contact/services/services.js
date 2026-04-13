@@ -35,3 +35,9 @@ export const createContactSubmission = async ({
 
   return doc;
 };
+
+export const listContactSubmissions = async () => {
+  return ContactSubmission.find()
+    .sort({ createdAt: -1 })
+    .lean();
+};

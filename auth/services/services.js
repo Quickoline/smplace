@@ -158,6 +158,9 @@ const serializePublicUser = (doc) => {
     name: u.name ?? null,
     phone: u.phone ?? null,
     role: u.role,
+    ratingAverage:
+      u.ratingAverage != null ? Number(u.ratingAverage) : null,
+    ratingCount: u.ratingCount != null ? Number(u.ratingCount) : 0,
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
   };

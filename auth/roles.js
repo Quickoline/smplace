@@ -32,6 +32,10 @@ export const isSuperadmin = (role) => role === ROLES.SUPERADMIN;
 
 export const canManageCatalog = (role) => CATALOG.has(role);
 
+/** Service & buy-sell listing CRUD (not categories) — senior, service, superadmin */
+export const canManageServiceListings = (role) =>
+  CATALOG.has(role) || role === ROLES.SERVICE_ADMIN;
+
 export const canManageOrders = (role) => ORDERS.has(role);
 
 /** Categories "admin tree" + similar: anyone who is staff for catalog or fulfillment */

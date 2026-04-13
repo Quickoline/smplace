@@ -1,4 +1,7 @@
-import { createFeedbackSubmission } from "../services/services.js";
+import {
+  createFeedbackSubmission,
+  listFeedbackSubmissions,
+} from "../services/services.js";
 
 export const createFeedbackController = async (req, res) => {
   try {
@@ -18,5 +21,14 @@ export const createFeedbackController = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const listFeedbackController = async (req, res) => {
+  try {
+    const items = await listFeedbackSubmissions();
+    res.status(200).json({ feedback: items });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

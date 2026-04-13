@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
-  createFeedbackController,
-  listFeedbackController,
+  createOnboardingController,
+  listOnboardingController,
 } from "../controller/controller.js";
 import {
   authenticate,
@@ -11,8 +11,7 @@ import {
 
 const router = Router();
 
-router.post("/", optionalAuthenticate, createFeedbackController);
-
-router.get("/", authenticate, requireSuperadmin, listFeedbackController);
+router.post("/", optionalAuthenticate, createOnboardingController);
+router.get("/", authenticate, requireSuperadmin, listOnboardingController);
 
 export default router;

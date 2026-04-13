@@ -1,6 +1,13 @@
 import { Router } from "express";
-import { createContactController } from "../controller/controller.js";
-import { optionalAuthenticate } from "../../../auth/middleware/middleware.js";
+import {
+  createContactController,
+  listContactsController,
+} from "../controller/controller.js";
+import {
+  authenticate,
+  optionalAuthenticate,
+  requireSuperadmin,
+} from "../../../auth/middleware/middleware.js";
 import { uploadContactFiles } from "../../../utils/upload.js";
 
 const router = Router();
@@ -15,5 +22,8 @@ const multipartContact = (req, res, next) => {
 
 // POST /contact — JSON (application/json) or multipart (fields + optional files[])
 router.post("/", optionalAuthenticate, multipartContact, createContactController);
+
+// Superadmin: list all contact submissions
+router.get("/", authenticate, requireSuperadmin, listContactsController);
 
 export default router;

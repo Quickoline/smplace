@@ -13,6 +13,7 @@ import paymentRoutes from "./api/payment/routes/routes.js";
 import walletRoutes from "./api/wallet/routes/routes.js";
 import contactRoutes from "./api/contact/routes/routes.js";
 import feedbackRoutes from "./api/feedback/routes/routes.js";
+import onboardingRoutes from "./api/onboarding/routes/routes.js";
 import { initSocket } from "./realtime/socket.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -90,6 +91,7 @@ app.use("/payments", paymentRoutes);
 app.use("/wallet", walletRoutes);
 app.use("/contact", contactRoutes);
 app.use("/feedback", feedbackRoutes);
+app.use("/onboarding", onboardingRoutes);
 
 const start = async () => {
   try {

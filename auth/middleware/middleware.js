@@ -2,7 +2,9 @@ import jwt from "jsonwebtoken";
 import {
   canManageCatalog,
   canManageOrders,
+  canManageServiceListings,
   canUseStaffCategoryTree,
+  isSuperadmin,
 } from "../roles.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "change_me_in_production";
@@ -59,6 +61,21 @@ export const requireOrderStaff = (req, res, next) => {
 /** Category tree for admin apps (senior sees own listings; ops sees assigned services) */
 export const requireStaffCategoryTree = (req, res, next) => {
   if (!req.user || !canUseStaffCategoryTree(req.user.role)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  next();
+};
+
+/** Create/edit/delete service & buy-sell listings (not categories) */
+export const requireServiceWriteStaff = (req, res, next) => {
+  if (!req.user || !canManageServiceListings(req.user.role)) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+  next();
+};
+
+export const requireSuperadmin = (req, res, next) => {
+  if (!req.user || !isSuperadmin(req.user.role)) {
     return res.status(403).json({ message: "Forbidden" });
   }
   next();
