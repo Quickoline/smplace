@@ -63,13 +63,12 @@ export const getOrderController = async (req, res) => {
     const order = await getOrderById(req.params.id);
 
     // access control:
-    // - user: only own orders
-    // - admin: only orders for services they own
-    // - superadmin: all
+    // - End customers: any token that is not order/superadmin staff (incl. missing role in JWT)
+    // - superadmin / order staff: below
     const userId = staffUserId(req);
     const role = req.user.role;
 
-    if (role === "user") {
+    if (!isSuperadmin(role) && !canManageOrders(role)) {
       if (String(order.createdBy) !== String(userId)) {
         return res.status(403).json({ message: "Not allowed to view this order" });
       }
