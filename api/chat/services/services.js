@@ -35,6 +35,28 @@ async function withSignedMediaUrl(doc) {
   return plain;
 }
 
+/** Marks inbound messages as read when the recipient opens the thread. */
+export async function markOrderMessagesRead(orderId, readerUserId) {
+  const now = new Date();
+  const result = await Message.updateMany(
+    {
+      order: orderId,
+      to: readerUserId,
+      $or: [{ readAt: { $exists: false } }, { readAt: null }],
+    },
+    { $set: { readAt: now } }
+  );
+
+  const io = getIO();
+  if (io && result.modifiedCount > 0) {
+    io.to(`order:${orderId}`).emit("chat:read", {
+      orderId: String(orderId),
+      readerId: String(readerUserId),
+      readAt: now.toISOString(),
+    });
+  }
+}
+
 export const sendMessage = async ({
   orderId,
   from,
@@ -54,6 +76,14 @@ export const sendMessage = async ({
   const order = await Order.findById(orderId);
   if (!order) {
     throw new Error("Order not found");
+  }
+
+  const isCustomer =
+    order.createdBy && String(order.createdBy) === String(from);
+  if (isCustomer && !order.provider) {
+    throw new Error(
+      "Chat is available after an admin accepts your order on the dashboard."
+    );
   }
 
   const { isUser, isAdmin } = ensureParticipant(order, from);
@@ -94,7 +124,17 @@ export const listMessages = async ({ orderId, userId }) => {
     throw new Error("Order not found");
   }
 
+  const isCustomer =
+    order.createdBy && String(order.createdBy) === String(userId);
+  if (isCustomer && !order.provider) {
+    throw new Error(
+      "Chat is available after an admin accepts your order on the dashboard."
+    );
+  }
+
   ensureParticipant(order, userId);
+
+  await markOrderMessagesRead(orderId, userId);
 
   const messages = await Message.find({ order: orderId })
     .sort({ createdAt: 1 })

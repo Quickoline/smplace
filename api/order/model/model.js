@@ -49,8 +49,23 @@ const orderSchema = new Schema(
       type: String,
       trim: true,
     },
+    /** Partner's rating of the customer (this order). */
+    customerRating: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+    customerRatingComment: {
+      type: String,
+      trim: true,
+    },
     provider: {
-      // admin who owns the service / listing
+      // handling admin (set when staff accepts the order, or legacy data)
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    listingOwner: {
+      // listing creator (service / buy-sell); set at order creation
       type: Schema.Types.ObjectId,
       ref: "User",
     },

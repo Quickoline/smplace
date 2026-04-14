@@ -5,11 +5,20 @@ import {
   getOrderById,
   updateOrderStatus,
   addRating,
+  acceptOrder,
+  addCustomerRatingByProvider,
 } from "../services/services.js";
 import {
   canManageOrders,
   isSuperadmin,
 } from "../../../auth/roles.js";
+
+function providerIdFromOrder(order) {
+  const p = order.provider;
+  if (!p) return null;
+  if (typeof p === "object" && p._id) return String(p._id);
+  return String(p);
+}
 
 export const createOrderController = async (req, res) => {
   try {
@@ -65,17 +74,31 @@ export const getOrderController = async (req, res) => {
       return res.status(200).json({ order });
     }
 
-    if (
-      canManageOrders(role) &&
-      order.provider &&
-      String(order.provider) === String(userId)
-    ) {
-      return res.status(200).json({ order });
+    if (canManageOrders(role)) {
+      const pId = providerIdFromOrder(order);
+      if (pId && pId === String(userId)) {
+        return res.status(200).json({ order });
+      }
+      if (order.status === "pending" && !pId) {
+        return res.status(200).json({ order });
+      }
     }
 
     return res.status(403).json({ message: "Not allowed to view this order" });
   } catch (error) {
     res.status(404).json({ message: error.message });
+  }
+};
+
+export const acceptOrderController = async (req, res) => {
+  try {
+    const order = await acceptOrder(req.params.id, req.user.id);
+    res.status(200).json({
+      message: "Order accepted. You are assigned to this order and chat.",
+      order,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -104,6 +127,23 @@ export const addRatingController = async (req, res) => {
       req.user.id
     );
     res.status(200).json({ message: "Rating added", order });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+/** Partner / superadmin rates the customer for this order. */
+export const addCustomerRatingController = async (req, res) => {
+  try {
+    const { rating, ratingComment } = req.body;
+    const order = await addCustomerRatingByProvider(
+      req.params.id,
+      rating,
+      ratingComment,
+      req.user.id,
+      req.user.role
+    );
+    res.status(200).json({ message: "Customer rating saved", order });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

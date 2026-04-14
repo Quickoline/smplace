@@ -57,6 +57,17 @@ const userSchema = new Schema(
       default: 0,
       min: 0,
     },
+    /** Aggregated from partner ratings on orders (this user is the customer). */
+    clientRatingAverage: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+    clientRatingCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );

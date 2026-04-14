@@ -4,8 +4,10 @@ import {
   listMyOrdersController,
   listAllOrdersController,
   getOrderController,
+  acceptOrderController,
   updateOrderStatusController,
   addRatingController,
+  addCustomerRatingController,
 } from "../controller/controller.js";
 import {
   authenticate,
@@ -32,6 +34,14 @@ router.get(
 // Single order
 router.get("/:id", authenticate, getOrderController);
 
+// Claim pending order (assigns current staff as provider → processing)
+router.post(
+  "/:id/accept",
+  authenticate,
+  requireOrderStaff,
+  acceptOrderController
+);
+
 // Update status - admin / superadmin
 // body: { status }
 router.patch(
@@ -42,8 +52,17 @@ router.patch(
 );
 
 // Add rating - only creator
-// body: { rating }
+// body: { rating, ratingComment? }
 router.patch("/:id/rating", authenticate, addRatingController);
+
+// Partner rates customer (order provider or superadmin)
+// body: { rating, ratingComment? }
+router.patch(
+  "/:id/customer-rating",
+  authenticate,
+  requireOrderStaff,
+  addCustomerRatingController
+);
 
 export default router;
 
