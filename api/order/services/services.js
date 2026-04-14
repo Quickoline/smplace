@@ -132,21 +132,71 @@ export const listMyOrders = async (userId) => {
 };
 
 export const listAllOrders = async (userId, role) => {
-  const filter =
-    role === "superadmin"
-      ? {}
-      : {
-          $or: [
-            { provider: userId },
-            { status: "pending", provider: null },
-          ],
-        };
-  return Order.find(filter)
+  if (role === "superadmin") {
+    return Order.find({})
+      .sort({ createdAt: -1 })
+      .populate("service")
+      .populate("provider", providerSelect)
+      .populate("listingOwner", providerSelect);
+  }
+
+  if (!userId) {
+    return [];
+  }
+
+  /** Service admins only see orders for their listings (and orders they handle as provider). */
+  if (role === "service_admin") {
+    const myServiceIds = await Service.find({ createdBy: userId }).distinct("_id");
+    const myBuySellIds = await BuySellListing.find({ createdBy: userId }).distinct(
+      "_id"
+    );
+    const myListingIds = [...myServiceIds, ...myBuySellIds];
+    const or = [
+      { provider: userId },
+      { listingOwner: userId },
+      ...(myListingIds.length ? [{ service: { $in: myListingIds } }] : []),
+    ];
+    return Order.find({ $or: or })
+      .sort({ createdAt: -1 })
+      .populate("service")
+      .populate("provider", providerSelect)
+      .populate("listingOwner", providerSelect);
+  }
+
+  /** Legacy ops admin: unassigned pool + orders assigned to this user. */
+  return Order.find({
+    $or: [{ provider: userId }, { status: "pending", provider: null }],
+  })
     .sort({ createdAt: -1 })
     .populate("service")
     .populate("provider", providerSelect)
     .populate("listingOwner", providerSelect);
 };
+
+function refId(docOrId) {
+  if (docOrId == null) return null;
+  if (typeof docOrId === "object" && docOrId._id != null) {
+    return String(docOrId._id);
+  }
+  return String(docOrId);
+}
+
+/** Whether this staff user may view/manage an order as a service_admin (own listings only). */
+export async function serviceAdminMayAccessOrder(order, userId) {
+  if (!order || !userId) return false;
+  const uid = String(userId);
+  const pId = refId(order.provider);
+  if (pId && pId === uid) return true;
+  const lo = refId(order.listingOwner);
+  if (lo && lo === uid) return true;
+  const myServiceIds = await Service.find({ createdBy: userId }).distinct("_id");
+  const myBuySellIds = await BuySellListing.find({ createdBy: userId }).distinct(
+    "_id"
+  );
+  const sid = refId(order.service);
+  if (!sid) return false;
+  return [...myServiceIds, ...myBuySellIds].some((id) => String(id) === sid);
+}
 
 export const getOrderById = async (id) => {
   const order = await Order.findById(id)
@@ -161,20 +211,40 @@ export const getOrderById = async (id) => {
 };
 
 /** Staff claims a pending order: sets provider and moves to processing (chat enabled). */
-export const acceptOrder = async (id, actorId) => {
+export const acceptOrder = async (id, actorId, role) => {
+  const base = {
+    _id: id,
+    status: "pending",
+    provider: null,
+  };
+
+  let filter = base;
+  if (role === "service_admin") {
+    const myServiceIds = await Service.find({ createdBy: actorId }).distinct("_id");
+    const myBuySellIds = await BuySellListing.find({ createdBy: actorId }).distinct(
+      "_id"
+    );
+    const myListingIds = [...myServiceIds, ...myBuySellIds];
+    filter = {
+      ...base,
+      $or: [
+        { listingOwner: actorId },
+        ...(myListingIds.length ? [{ service: { $in: myListingIds } }] : []),
+      ],
+    };
+  }
+
   const updated = await Order.findOneAndUpdate(
-    {
-      _id: id,
-      status: "pending",
-      provider: null,
-    },
+    filter,
     { $set: { provider: actorId, status: "processing" } },
     { new: true, runValidators: true }
   );
 
   if (!updated) {
     throw new Error(
-      "Order could not be accepted. It may already be assigned or is not pending."
+      role === "service_admin"
+        ? "Order could not be accepted. It may not be yours, or it is already assigned."
+        : "Order could not be accepted. It may already be assigned or is not pending."
     );
   }
 

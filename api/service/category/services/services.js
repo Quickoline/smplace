@@ -4,6 +4,7 @@ import {
   canManageCatalog,
   canManageOrders,
   isSuperadmin,
+  ROLES,
 } from "../../../../auth/roles.js";
 
 export const createCategory = async ({ name, subcategories }) => {
@@ -108,6 +109,8 @@ export const listAdminCategoriesWithServices = async (adminId, role) => {
   if (isSuperadmin(role)) {
     serviceFilter = {};
   } else if (canManageCatalog(role)) {
+    serviceFilter = { createdBy: adminId };
+  } else if (role === ROLES.SERVICE_ADMIN) {
     serviceFilter = { createdBy: adminId };
   } else if (canManageOrders(role)) {
     serviceFilter = {

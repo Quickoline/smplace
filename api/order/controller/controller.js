@@ -7,11 +7,17 @@ import {
   addRating,
   acceptOrder,
   addCustomerRatingByProvider,
+  serviceAdminMayAccessOrder,
 } from "../services/services.js";
 import {
   canManageOrders,
   isSuperadmin,
+  ROLES,
 } from "../../../auth/roles.js";
+
+function staffUserId(req) {
+  return req.user?.id ?? req.user?._id;
+}
 
 function providerIdFromOrder(order) {
   const p = order.provider;
@@ -26,7 +32,7 @@ export const createOrderController = async (req, res) => {
     const order = await createOrder({
       serviceId,
       source,
-      userId: req.user?.id,
+      userId: staffUserId(req),
     });
     res.status(201).json({ message: "Order created", order });
   } catch (error) {
@@ -36,8 +42,8 @@ export const createOrderController = async (req, res) => {
 
 export const listMyOrdersController = async (req, res) => {
   try {
-    const orders = await listMyOrders(req.user.id);
-    res.status(200).json({ orders });
+    const orders = await listMyOrders(staffUserId(req));
+    res.status(200).json({ orders: orders ?? [] });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -45,8 +51,8 @@ export const listMyOrdersController = async (req, res) => {
 
 export const listAllOrdersController = async (req, res) => {
   try {
-    const orders = await listAllOrders(req.user.id, req.user.role);
-    res.status(200).json({ orders });
+    const orders = await listAllOrders(staffUserId(req), req.user.role);
+    res.status(200).json({ orders: orders ?? [] });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -60,7 +66,7 @@ export const getOrderController = async (req, res) => {
     // - user: only own orders
     // - admin: only orders for services they own
     // - superadmin: all
-    const userId = req.user.id;
+    const userId = staffUserId(req);
     const role = req.user.role;
 
     if (role === "user") {
@@ -75,6 +81,12 @@ export const getOrderController = async (req, res) => {
     }
 
     if (canManageOrders(role)) {
+      if (role === ROLES.SERVICE_ADMIN) {
+        const ok = await serviceAdminMayAccessOrder(order, userId);
+        if (ok) return res.status(200).json({ order });
+        return res.status(403).json({ message: "Not allowed to view this order" });
+      }
+
       const pId = providerIdFromOrder(order);
       if (pId && pId === String(userId)) {
         return res.status(200).json({ order });
@@ -92,7 +104,11 @@ export const getOrderController = async (req, res) => {
 
 export const acceptOrderController = async (req, res) => {
   try {
-    const order = await acceptOrder(req.params.id, req.user.id);
+    const order = await acceptOrder(
+      req.params.id,
+      staffUserId(req),
+      req.user.role
+    );
     res.status(200).json({
       message: "Order accepted. You are assigned to this order and chat.",
       order,
@@ -108,7 +124,7 @@ export const updateOrderStatusController = async (req, res) => {
     const order = await updateOrderStatus(
       req.params.id,
       status,
-      req.user.id,
+      staffUserId(req),
       req.user.role
     );
     res.status(200).json({ message: "Order status updated", order });
@@ -124,7 +140,7 @@ export const addRatingController = async (req, res) => {
       req.params.id,
       rating,
       ratingComment,
-      req.user.id
+      staffUserId(req)
     );
     res.status(200).json({ message: "Rating added", order });
   } catch (error) {
@@ -140,7 +156,7 @@ export const addCustomerRatingController = async (req, res) => {
       req.params.id,
       rating,
       ratingComment,
-      req.user.id,
+      staffUserId(req),
       req.user.role
     );
     res.status(200).json({ message: "Customer rating saved", order });

@@ -203,18 +203,24 @@ export const createService = async ({
 
 
 
-export const listServices = async () => {
+/**
+ * @param {object} [viewer] - JWT user when present (optionalAuthenticate).
+ * service_admin: only services they created. Others / public: all (marketplace).
+ */
+export const listServices = async (viewer) => {
+  const filter =
+    viewer &&
+    viewer.role === "service_admin" &&
+    (viewer.id != null || viewer._id != null)
+      ? { createdBy: viewer.id ?? viewer._id }
+      : {};
 
-  const rows = await Service.find()
-
+  const rows = await Service.find(filter)
     .populate("categoryId")
-
     .sort({ createdAt: -1 })
-
     .lean();
 
   return rows.map(serializeService);
-
 };
 
 
