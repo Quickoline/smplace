@@ -168,6 +168,7 @@ const run = async () => {
     const bcrypt = (await import("bcryptjs")).default;
     const superadmin = await User.create({
       email: superadminEmail,
+      name: "Superadmin",
       passwordHash: await bcrypt.hash(superadminPassword, 10),
       role: "superadmin",
     });
@@ -177,10 +178,10 @@ const run = async () => {
     const seniorPassword = "Senior123";
     const seniorResult = await createAdminBySuperAdmin({
       email: seniorEmail,
+      name: "Senior Admin",
       employeeId: "EMP-SENIOR",
       password: seniorPassword,
       phone: "9876543210",
-      phoneLast4: "3210",
       qrCodeUrl: null,
       role: "senior_admin",
       createdBy: superadmin._id,
@@ -192,10 +193,10 @@ const run = async () => {
     const opsPassword = "Ops12345";
     const opsResult = await createAdminBySuperAdmin({
       email: opsEmail,
+      name: "Service Admin",
       employeeId: "EMP-OPS",
       password: opsPassword,
       phone: "9876543211",
-      phoneLast4: "3211",
       qrCodeUrl: null,
       role: "service_admin",
       createdBy: superadmin._id,
@@ -207,6 +208,7 @@ const run = async () => {
     const userPassword = "User123";
     const userResult = await registerUser({
       email: userEmail,
+      name: "Test User",
       phone: "9123456789",
       password: userPassword,
     });

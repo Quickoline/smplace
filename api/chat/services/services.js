@@ -4,7 +4,7 @@ import { getIO } from "../../../realtime/socket.js";
 import { signMediaUrlIfNeeded } from "../../../config/aws.js";
 
 const STAFF_POPULATE_FIELDS =
-  "email role name phone ratingAverage ratingCount employeeId phoneLast4";
+  "email role name phone ratingAverage ratingCount employeeId";
 
 const ensureParticipant = (order, userId) => {
   const isUser =

@@ -5,7 +5,7 @@ import { BuySellListing } from "../../buySell/model/model.js";
 import { User } from "../../../auth/model/model.js";
 
 const providerSelect =
-  "email name phone ratingAverage ratingCount clientRatingAverage clientRatingCount role employeeId phoneLast4";
+  "email name phone ratingAverage ratingCount clientRatingAverage clientRatingCount role employeeId";
 
 export async function recomputeAdminRating(adminId) {
   if (!adminId) return;

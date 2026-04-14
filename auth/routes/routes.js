@@ -4,11 +4,17 @@ import {
   loginController,
   adminLoginController,
   createAdminController,
+  listStaffAccountsController,
+  updateStaffAccountController,
   uploadQrController,
   getProfileController,
   updateProfileController,
 } from "../controller/controller.js";
-import { authenticate, requireRole } from "../middleware/middleware.js";
+import {
+  authenticate,
+  requireRole,
+  requireSuperadmin,
+} from "../middleware/middleware.js";
 import { uploadQr } from "../../utils/upload_qr.js";
 
 const router = Router();
@@ -27,6 +33,20 @@ router.post("/admin/login", adminLoginController);
 router.get("/profile", authenticate, getProfileController);
 router.put("/profile", authenticate, updateProfileController);
 
+// Staff directory — superadmin only
+router.get(
+  "/staff",
+  authenticate,
+  requireSuperadmin,
+  listStaffAccountsController
+);
+router.patch(
+  "/staff/:id",
+  authenticate,
+  requireSuperadmin,
+  updateStaffAccountController
+);
+
 // Upload QR for admin (superadmin) - multipart file
 router.post(
   "/upload-qr",
@@ -37,7 +57,7 @@ router.post(
 );
 
 // Create admin - only superadmin
-// body: { email, employeeId, password, phone, phoneLast4, qrCodeUrl? }
+// body: { email, name, employeeId, password, phone, qrCodeUrl?, role? }
 router.post(
   "/admin",
   authenticate,

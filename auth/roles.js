@@ -52,3 +52,22 @@ export const normalizeCreatableStaffRole = (role) => {
   if (role && CREATABLE_STAFF_ROLES.has(role)) return role;
   return ROLES.SERVICE_ADMIN;
 };
+
+const ASSIGNABLE_STAFF_ROLES = new Set([
+  ROLES.SUPERADMIN,
+  ROLES.SENIOR_ADMIN,
+  ROLES.SERVICE_ADMIN,
+  ROLES.ADMIN,
+]);
+
+/** Superadmin may assign these roles when editing an existing staff account. */
+export const normalizeAssignableStaffRole = (role) => {
+  if (role == null || role === "") {
+    throw new Error("role is required");
+  }
+  const r = String(role).trim();
+  if (!ASSIGNABLE_STAFF_ROLES.has(r)) {
+    throw new Error("Invalid staff role");
+  }
+  return r;
+};

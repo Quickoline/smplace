@@ -3,14 +3,16 @@ import {
   loginUserOrAdmin,
   loginStaffByEmailPassword,
   createAdminBySuperAdmin,
+  listStaffAccounts,
+  updateStaffAccountBySuperadmin,
   getUserProfile,
   updateUserProfile,
 } from "../services/services.js";
 
 export const registerUserController = async (req, res) => {
   try {
-    const { email, phone, password } = req.body;
-    const result = await registerUser({ email, phone, password });
+    const { email, phone, password, name } = req.body;
+    const result = await registerUser({ email, phone, password, name });
 
     res.status(201).json({
       message: "User registered successfully",
@@ -48,7 +50,6 @@ export const loginController = async (req, res) => {
         name: result.user.name ?? null,
         phone: result.user.phone,
         employeeId: result.user.employeeId,
-        phoneLast4: result.user.phoneLast4,
         qrCodeUrl: result.user.qrCodeUrl,
         role: result.user.role,
         ratingAverage: result.user.ratingAverage ?? null,
@@ -75,7 +76,6 @@ export const adminLoginController = async (req, res) => {
         name: result.user.name ?? null,
         phone: result.user.phone,
         employeeId: result.user.employeeId,
-        phoneLast4: result.user.phoneLast4,
         qrCodeUrl: result.user.qrCodeUrl,
         role: result.user.role,
         ratingAverage: result.user.ratingAverage ?? null,
@@ -90,15 +90,15 @@ export const adminLoginController = async (req, res) => {
 
 export const createAdminController = async (req, res) => {
   try {
-    const { email, employeeId, password, phone, phoneLast4, qrCodeUrl, role } =
+    const { email, name, employeeId, password, phone, qrCodeUrl, role } =
       req.body;
 
     const result = await createAdminBySuperAdmin({
       email,
+      name,
       employeeId,
       password,
       phone,
-      phoneLast4,
       qrCodeUrl,
       role,
       createdBy: req.user.id,
@@ -109,9 +109,9 @@ export const createAdminController = async (req, res) => {
       admin: {
         id: result.admin._id,
         email: result.admin.email,
+        name: result.admin.name ?? null,
         employeeId: result.admin.employeeId,
         phone: result.admin.phone,
-        phoneLast4: result.admin.phoneLast4,
         qrCodeUrl: result.admin.qrCodeUrl,
         role: result.admin.role,
       },
@@ -119,6 +119,56 @@ export const createAdminController = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const listStaffAccountsController = async (req, res) => {
+  try {
+    const staff = await listStaffAccounts();
+    res.status(200).json({ staff });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/** PATCH body: any of name, phone, employeeId, email, qrCodeUrl, role, password (non-empty). */
+export const updateStaffAccountController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, phone, employeeId, email, qrCodeUrl, role, password } =
+      req.body ?? {};
+    const hasField =
+      name !== undefined ||
+      phone !== undefined ||
+      employeeId !== undefined ||
+      email !== undefined ||
+      qrCodeUrl !== undefined ||
+      role !== undefined ||
+      (password !== undefined &&
+        password !== null &&
+        String(password).length > 0);
+    if (!hasField) {
+      return res.status(400).json({
+        message:
+          "Provide at least one field: name, phone, employeeId, email, qrCodeUrl, role, or password",
+      });
+    }
+    const staff = await updateStaffAccountBySuperadmin({
+      actorId: req.user.id,
+      targetUserId: id,
+      name,
+      phone,
+      employeeId,
+      email,
+      qrCodeUrl,
+      role,
+      password,
+    });
+    res.status(200).json({ message: "Staff updated", staff });
+  } catch (error) {
+    const msg = error.message || "Update failed";
+    const code = /not found/i.test(msg) ? 404 : 400;
+    res.status(code).json({ message: msg });
   }
 };
 
