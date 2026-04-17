@@ -7,7 +7,34 @@ import {
   updateStaffAccountBySuperadmin,
   getUserProfile,
   updateUserProfile,
+  requestPasswordResetForUser,
+  resetPasswordWithToken,
 } from "../services/services.js";
+
+export const forgotPasswordController = async (req, res) => {
+  try {
+    const { email } = req.body ?? {};
+    await requestPasswordResetForUser(email);
+    res.status(200).json({
+      message:
+        "If an account exists for that email, we sent password reset instructions.",
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const resetPasswordController = async (req, res) => {
+  try {
+    const { token, password } = req.body ?? {};
+    await resetPasswordWithToken(token, password);
+    res.status(200).json({
+      message: "Password updated. You can sign in with your new password.",
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
 export const registerUserController = async (req, res) => {
   try {

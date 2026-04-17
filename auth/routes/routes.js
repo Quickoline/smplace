@@ -9,6 +9,8 @@ import {
   uploadQrController,
   getProfileController,
   updateProfileController,
+  forgotPasswordController,
+  resetPasswordController,
 } from "../controller/controller.js";
 import {
   authenticate,
@@ -21,6 +23,10 @@ const router = Router();
 
 // User registration: email + phone + password
 router.post("/register", registerUserController);
+
+// Password reset (marketplace users) — email via nodemailer
+router.post("/forgot-password", forgotPasswordController);
+router.post("/reset-password", resetPasswordController);
 
 // Login for both user and admin
 // body: { email, password, role, phone? (for user), employeeId? (for admin) }

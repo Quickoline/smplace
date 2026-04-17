@@ -1,6 +1,8 @@
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../model/model.js";
+import { sendPasswordResetEmail } from "./mail.js";
 import {
   normalizeCreatableStaffRole,
   normalizeAssignableStaffRole,
@@ -312,4 +314,71 @@ export const updateUserProfile = async (userId, { name, phone }) => {
 
   await user.save();
   return getUserProfile(userId);
+};
+
+const hashPasswordResetToken = (raw) =>
+  crypto.createHash("sha256").update(String(raw), "utf8").digest("hex");
+
+const passwordResetExpiryMs = () => {
+  const hours = Number(process.env.PASSWORD_RESET_EXPIRE_HOURS || 1);
+  const h = Number.isFinite(hours) && hours > 0 ? hours : 1;
+  return h * 3600 * 1000;
+};
+
+/**
+ * Marketplace customers only (`role: user`). Always succeeds from a privacy perspective
+ * when the account is missing; sends email when the user exists.
+ */
+export const requestPasswordResetForUser = async (email) => {
+  const e = String(email ?? "").trim().toLowerCase();
+  if (!e || !e.includes("@")) {
+    throw new Error("Valid email is required");
+  }
+  const user = await User.findOne({ email: e, role: "user" });
+  if (!user) {
+    return;
+  }
+  const raw = crypto.randomBytes(32).toString("hex");
+  user.passwordResetToken = hashPasswordResetToken(raw);
+  user.passwordResetExpires = new Date(Date.now() + passwordResetExpiryMs());
+  await user.save();
+
+  const base =
+    process.env.PASSWORD_RESET_WEB_URL?.trim() ||
+    "https://www.elizble.com/reset-password";
+  const sep = base.includes("?") ? "&" : "?";
+  const resetUrl = `${base}${sep}token=${encodeURIComponent(raw)}`;
+
+  try {
+    await sendPasswordResetEmail(user.email, resetUrl);
+  } catch (err) {
+    console.error("[mail] sendPasswordResetEmail failed:", err?.message || err);
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    throw err;
+  }
+};
+
+export const resetPasswordWithToken = async (rawToken, newPassword) => {
+  const p = String(newPassword ?? "");
+  if (p.length < 8) {
+    throw new Error("Password must be at least 8 characters");
+  }
+  const raw = String(rawToken ?? "").trim();
+  if (!raw) {
+    throw new Error("Reset token is required");
+  }
+  const tokenHash = hashPasswordResetToken(raw);
+  const user = await User.findOne({
+    passwordResetToken: tokenHash,
+    passwordResetExpires: { $gt: new Date() },
+  });
+  if (!user || user.role !== "user") {
+    throw new Error("Invalid or expired reset link");
+  }
+  user.passwordHash = await bcrypt.hash(p, 10);
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
 };

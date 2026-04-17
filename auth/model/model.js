@@ -35,6 +35,13 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    /** SHA-256 hex of raw reset token; cleared after use. */
+    passwordResetToken: {
+      type: String,
+    },
+    passwordResetExpires: {
+      type: Date,
+    },
     role: {
       type: String,
       enum: [
