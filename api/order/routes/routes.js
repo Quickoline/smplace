@@ -3,6 +3,7 @@ import {
   createOrderController,
   listMyOrdersController,
   listAllOrdersController,
+  listPartnerReviewsController,
   getOrderController,
   acceptOrderController,
   updateOrderStatusController,
@@ -29,6 +30,13 @@ router.get(
   authenticate,
   requireOrderStaff,
   listAllOrdersController
+);
+
+// Partner profile: all customer reviews for this provider (marketplace users)
+router.get(
+  "/partner/:providerId/reviews",
+  authenticate,
+  listPartnerReviewsController
 );
 
 // Single order

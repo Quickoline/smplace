@@ -161,9 +161,9 @@ export const createService = async ({
 
 }) => {
 
-  if (!name || !categoryId || !description || price == null) {
+  if (!name || !categoryId || !description) {
 
-    throw new Error("name, categoryId, description and price are required");
+    throw new Error("name, categoryId and description are required");
 
   }
 
@@ -173,7 +173,7 @@ export const createService = async ({
 
 
 
-  const doc = await Service.create({
+  const createPayload = {
 
     name,
 
@@ -183,15 +183,43 @@ export const createService = async ({
 
     description,
 
-    price,
-
     requirements,
 
     included,
 
     createdBy: userId,
 
-  });
+  };
+
+  if (
+
+    price !== undefined &&
+
+    price !== null &&
+
+    String(price).trim() !== ""
+
+  ) {
+
+    const n = Number(price);
+
+    if (!Number.isFinite(n) || n < 0) {
+
+      throw new Error("Invalid price");
+
+    }
+
+    createPayload.price = n;
+
+  }
+
+  if (operationsAdminId) {
+
+    createPayload.operationsAdminId = operationsAdminId;
+
+  }
+
+  const doc = await Service.create(createPayload);
 
 
 
@@ -269,6 +297,8 @@ export const updateService = async (id, payload) => {
 
   const $set = {};
 
+  const $unset = {};
+
   if (payload.name !== undefined) $set.name = payload.name;
 
   if (payload.categoryId !== undefined) $set.categoryId = payload.categoryId;
@@ -281,7 +311,27 @@ export const updateService = async (id, payload) => {
 
   if (payload.description !== undefined) $set.description = payload.description;
 
-  if (payload.price !== undefined) $set.price = payload.price;
+  if (payload.price !== undefined) {
+
+    if (payload.price === null || payload.price === "") {
+
+      $unset.price = 1;
+
+    } else {
+
+      const n = Number(payload.price);
+
+      if (!Number.isFinite(n) || n < 0) {
+
+        throw new Error("Invalid price");
+
+      }
+
+      $set.price = n;
+
+    }
+
+  }
 
   if (payload.requirements !== undefined) {
 
@@ -303,15 +353,27 @@ export const updateService = async (id, payload) => {
 
 
 
-  const updated = await Service.findByIdAndUpdate(
+  const update = {};
 
-    id,
+  if (Object.keys($set).length) update.$set = $set;
 
-    { $set },
+  if (Object.keys($unset).length) update.$unset = $unset;
 
-    { new: true, runValidators: true }
 
-  );
+
+  const updated =
+
+    Object.keys(update).length > 0
+
+      ? await Service.findByIdAndUpdate(id, update, {
+
+          new: true,
+
+          runValidators: true,
+
+        })
+
+      : await Service.findById(id);
 
 
 

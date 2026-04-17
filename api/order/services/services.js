@@ -330,3 +330,33 @@ export const addCustomerRatingByProvider = async (
   return getOrderById(order._id);
 };
 
+/** Signed-in users: customer reviews (rating + comment) for a partner (provider user id). */
+export const listPartnerReviews = async (providerId, viewerUserId) => {
+  if (!mongoose.Types.ObjectId.isValid(String(providerId))) {
+    throw new Error("Invalid provider id");
+  }
+  const pid = new mongoose.Types.ObjectId(String(providerId));
+  const rows = await Order.find({
+    provider: pid,
+    rating: { $nin: [null, undefined] },
+  })
+    .sort({ createdAt: -1 })
+    .limit(200)
+    .select("rating ratingComment createdAt customerName createdBy")
+    .lean();
+
+  const viewerStr = viewerUserId != null ? String(viewerUserId) : "";
+
+  return rows.map((o) => ({
+    orderId: String(o._id),
+    rating: o.rating,
+    ratingComment: o.ratingComment ?? "",
+    createdAt: o.createdAt,
+    customerName: o.customerName ?? "Customer",
+    isYours:
+      viewerStr !== "" &&
+      o.createdBy &&
+      String(o.createdBy) === viewerStr,
+  }));
+};
+

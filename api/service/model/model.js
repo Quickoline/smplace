@@ -22,9 +22,9 @@ const serviceSchema = new Schema(
       required: true,
       trim: true,
     },
+    /** Optional — omit when pricing is discussed separately. */
     price: {
       type: Number,
-      required: true,
       min: 0,
     },
     requirements: {

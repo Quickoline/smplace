@@ -8,6 +8,7 @@ import {
   acceptOrder,
   addCustomerRatingByProvider,
   serviceAdminMayAccessOrder,
+  listPartnerReviews,
 } from "../services/services.js";
 import {
   canManageOrders,
@@ -55,6 +56,16 @@ export const listAllOrdersController = async (req, res) => {
     res.status(200).json({ orders: orders ?? [] });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const listPartnerReviewsController = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+    const reviews = await listPartnerReviews(providerId, staffUserId(req));
+    res.status(200).json({ reviews });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
 
