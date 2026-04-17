@@ -12,22 +12,31 @@ const walletTransactionSchema = new Schema(
     order: {
       type: Schema.Types.ObjectId,
       ref: "Order",
-      required: true,
     },
     payment: {
       type: Schema.Types.ObjectId,
       ref: "Payment",
-      required: true,
     },
+    /** For payment_verified: positive (INR). For manual_adjustment: signed delta (credit + / debit -). */
     amount: {
       type: Number,
       required: true,
-      min: 0,
     },
     type: {
       type: String,
-      enum: ["payment_verified"],
+      enum: ["payment_verified", "manual_adjustment"],
       default: "payment_verified",
+    },
+    /** Superadmin note for manual_adjustment only. */
+    note: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+    /** Staff user who created a manual adjustment. */
+    createdByStaff: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   { timestamps: true }
