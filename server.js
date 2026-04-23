@@ -14,6 +14,7 @@ import walletRoutes from "./api/wallet/routes/routes.js";
 import contactRoutes from "./api/contact/routes/routes.js";
 import feedbackRoutes from "./api/feedback/routes/routes.js";
 import onboardingRoutes from "./api/onboarding/routes/routes.js";
+import serviceRequestRoutes from "./api/serviceRequest/routes/routes.js";
 import { initSocket } from "./realtime/socket.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -98,6 +99,7 @@ alsoApi("/wallet", walletRoutes);
 alsoApi("/contact", contactRoutes);
 alsoApi("/feedback", feedbackRoutes);
 alsoApi("/onboarding", onboardingRoutes);
+alsoApi("/service-requests", serviceRequestRoutes);
 
 const start = async () => {
   try {
