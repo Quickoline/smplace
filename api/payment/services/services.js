@@ -2,7 +2,10 @@ import Razorpay from "razorpay";
 import { Payment } from "../model/model.js";
 import { Order } from "../../order/model/model.js";
 import { User } from "../../../auth/model/model.js";
-import { isSuperadmin } from "../../../auth/roles.js";
+import { isSuperadmin, ROLES } from "../../../auth/roles.js";
+
+const canManageAnyOrderPayment = (role) =>
+  isSuperadmin(role) || role === ROLES.SERVICE_ADMIN;
 import { WalletTransaction } from "../../wallet/model/model.js";
 
 const getRazorpay = () => {
@@ -17,6 +20,7 @@ export const createPaymentRequest = async ({
   amount,
   type,
   adminId,
+  role,
 }) => {
   if (!orderId || !amount || amount <= 0 || !type) {
     throw new Error("orderId, amount and type (gst|non_gst) are required");
@@ -25,7 +29,9 @@ export const createPaymentRequest = async ({
   const order = await Order.findById(orderId).populate("provider");
   if (!order) throw new Error("Order not found");
 
-  if (String(order.provider) !== String(adminId)) {
+  const assignedToActor =
+    order.provider && String(order.provider) === String(adminId);
+  if (!assignedToActor && !canManageAnyOrderPayment(role)) {
     throw new Error("You can only create payment for your own orders");
   }
 
@@ -101,7 +107,7 @@ export const getPaymentByOrder = async (orderId, userId, role) => {
   const isUser = order.createdBy && String(order.createdBy) === String(userId);
   const isAdmin = order.provider && String(order.provider) === String(userId);
 
-  if (!isUser && !isAdmin && !isSuperadmin(role)) {
+  if (!isUser && !isAdmin && !canManageAnyOrderPayment(role)) {
     throw new Error("Not allowed to view this payment");
   }
 
@@ -132,7 +138,7 @@ export const listPaymentsByOrder = async (orderId, userId, role) => {
   const isUser = order.createdBy && String(order.createdBy) === String(userId);
   const isAdmin = order.provider && String(order.provider) === String(userId);
 
-  if (!isUser && !isAdmin && !isSuperadmin(role)) {
+  if (!isUser && !isAdmin && !canManageAnyOrderPayment(role)) {
     throw new Error("Not allowed to view payments for this order");
   }
 
@@ -147,7 +153,7 @@ export const verifyPayment = async (paymentId, adminId, role) => {
   if (!order) throw new Error("Order not found");
 
   if (
-    !isSuperadmin(role) &&
+    !canManageAnyOrderPayment(role) &&
     String(order.provider) !== String(adminId)
   ) {
     throw new Error("Only the order provider can verify this payment");

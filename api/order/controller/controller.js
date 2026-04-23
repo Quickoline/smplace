@@ -7,7 +7,6 @@ import {
   addRating,
   acceptOrder,
   addCustomerRatingByProvider,
-  serviceAdminMayAccessOrder,
   listPartnerReviews,
 } from "../services/services.js";
 import {
@@ -86,17 +85,11 @@ export const getOrderController = async (req, res) => {
       return res.status(200).json({ order });
     }
 
-    if (isSuperadmin(role)) {
+    if (isSuperadmin(role) || role === ROLES.SERVICE_ADMIN) {
       return res.status(200).json({ order });
     }
 
     if (canManageOrders(role)) {
-      if (role === ROLES.SERVICE_ADMIN) {
-        const ok = await serviceAdminMayAccessOrder(order, userId);
-        if (ok) return res.status(200).json({ order });
-        return res.status(403).json({ message: "Not allowed to view this order" });
-      }
-
       const pId = providerIdFromOrder(order);
       if (pId && pId === String(userId)) {
         return res.status(200).json({ order });

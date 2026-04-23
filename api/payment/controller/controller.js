@@ -13,6 +13,7 @@ export const createPaymentController = async (req, res) => {
       amount: Number(amount),
       type,
       adminId: req.user.id,
+      role: req.user.role,
     });
     res.status(201).json({
       message: "Payment request created",

@@ -10,6 +10,7 @@ export const sendMessageController = async (req, res) => {
       body,
       mediaUrl,
       mediaType,
+      role: req.user.role,
     });
     res.status(201).json({ message: "Message sent", data: msg });
   } catch (error) {
@@ -38,6 +39,7 @@ export const sendMediaMessageController = async (req, res) => {
       mediaUrl,
       mediaType: mediaType || "",
       mimeType: req.file.mimetype,
+      role: req.user.role,
     });
     res.status(201).json({ message: "Message sent", data: msg });
   } catch (error) {
@@ -51,6 +53,7 @@ export const listMessagesController = async (req, res) => {
     const messages = await listMessages({
       orderId,
       userId: req.user.id,
+      role: req.user.role,
     });
     res.status(200).json({ messages });
   } catch (error) {

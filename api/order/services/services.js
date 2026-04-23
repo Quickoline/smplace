@@ -132,7 +132,8 @@ export const listMyOrders = async (userId) => {
 };
 
 export const listAllOrders = async (userId, role) => {
-  if (role === "superadmin") {
+  /** Full order visibility for platform superadmin and service_admin (handle any order). */
+  if (role === "superadmin" || role === "service_admin") {
     return Order.find({})
       .sort({ createdAt: -1 })
       .populate("service")
@@ -144,25 +145,6 @@ export const listAllOrders = async (userId, role) => {
     return [];
   }
 
-  /** Service admins only see orders for their listings (and orders they handle as provider). */
-  if (role === "service_admin") {
-    const myServiceIds = await Service.find({ createdBy: userId }).distinct("_id");
-    const myBuySellIds = await BuySellListing.find({ createdBy: userId }).distinct(
-      "_id"
-    );
-    const myListingIds = [...myServiceIds, ...myBuySellIds];
-    const or = [
-      { provider: userId },
-      { listingOwner: userId },
-      ...(myListingIds.length ? [{ service: { $in: myListingIds } }] : []),
-    ];
-    return Order.find({ $or: or })
-      .sort({ createdAt: -1 })
-      .populate("service")
-      .populate("provider", providerSelect)
-      .populate("listingOwner", providerSelect);
-  }
-
   /** Legacy ops admin: unassigned pool + orders assigned to this user. */
   return Order.find({
     $or: [{ provider: userId }, { status: "pending", provider: null }],
@@ -172,31 +154,6 @@ export const listAllOrders = async (userId, role) => {
     .populate("provider", providerSelect)
     .populate("listingOwner", providerSelect);
 };
-
-function refId(docOrId) {
-  if (docOrId == null) return null;
-  if (typeof docOrId === "object" && docOrId._id != null) {
-    return String(docOrId._id);
-  }
-  return String(docOrId);
-}
-
-/** Whether this staff user may view/manage an order as a service_admin (own listings only). */
-export async function serviceAdminMayAccessOrder(order, userId) {
-  if (!order || !userId) return false;
-  const uid = String(userId);
-  const pId = refId(order.provider);
-  if (pId && pId === uid) return true;
-  const lo = refId(order.listingOwner);
-  if (lo && lo === uid) return true;
-  const myServiceIds = await Service.find({ createdBy: userId }).distinct("_id");
-  const myBuySellIds = await BuySellListing.find({ createdBy: userId }).distinct(
-    "_id"
-  );
-  const sid = refId(order.service);
-  if (!sid) return false;
-  return [...myServiceIds, ...myBuySellIds].some((id) => String(id) === sid);
-}
 
 export const getOrderById = async (id) => {
   const order = await Order.findById(id)
@@ -218,21 +175,8 @@ export const acceptOrder = async (id, actorId, role) => {
     provider: null,
   };
 
-  let filter = base;
-  if (role === "service_admin") {
-    const myServiceIds = await Service.find({ createdBy: actorId }).distinct("_id");
-    const myBuySellIds = await BuySellListing.find({ createdBy: actorId }).distinct(
-      "_id"
-    );
-    const myListingIds = [...myServiceIds, ...myBuySellIds];
-    filter = {
-      ...base,
-      $or: [
-        { listingOwner: actorId },
-        ...(myListingIds.length ? [{ service: { $in: myListingIds } }] : []),
-      ],
-    };
-  }
+  /** service_admin: same as ops — any pending unassigned order. */
+  const filter = base;
 
   const updated = await Order.findOneAndUpdate(
     filter,
@@ -242,9 +186,7 @@ export const acceptOrder = async (id, actorId, role) => {
 
   if (!updated) {
     throw new Error(
-      role === "service_admin"
-        ? "Order could not be accepted. It may not be yours, or it is already assigned."
-        : "Order could not be accepted. It may already be assigned or is not pending."
+      "Order could not be accepted. It may already be assigned or is not pending."
     );
   }
 
@@ -256,7 +198,11 @@ export const updateOrderStatus = async (id, status, actorId, role) => {
   if (!order) {
     throw new Error("Order not found");
   }
-  if (role !== "superadmin" && String(order.provider) !== String(actorId)) {
+  if (
+    role !== "superadmin" &&
+    role !== "service_admin" &&
+    String(order.provider) !== String(actorId)
+  ) {
     throw new Error("Not allowed to update this order");
   }
 
@@ -310,7 +256,11 @@ export const addCustomerRatingByProvider = async (
   if (!order) {
     throw new Error("Order not found");
   }
-  if (role !== "superadmin" && String(order.provider) !== String(actorId)) {
+  if (
+    role !== "superadmin" &&
+    role !== "service_admin" &&
+    String(order.provider) !== String(actorId)
+  ) {
     throw new Error("Not allowed to rate this customer");
   }
   if (!order.createdBy) {

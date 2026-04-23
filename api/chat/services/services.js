@@ -2,21 +2,29 @@ import { Message } from "../model/model.js";
 import { Order } from "../../order/model/model.js";
 import { getIO } from "../../../realtime/socket.js";
 import { signMediaUrlIfNeeded } from "../../../config/aws.js";
+import { isSuperadmin, ROLES } from "../../../auth/roles.js";
 
 const STAFF_POPULATE_FIELDS =
   "email role name phone ratingAverage ratingCount employeeId";
 
-const ensureParticipant = (order, userId) => {
+/** Resolves chat side: customer vs staff. Superadmin / service_admin may participate as staff on any order. */
+const resolveChatParticipant = (order, userId, role) => {
   const isUser =
     order.createdBy && String(order.createdBy) === String(userId);
-  const isAdmin =
+  const isProvider =
     order.provider && String(order.provider) === String(userId);
 
-  if (!isUser && !isAdmin) {
-    throw new Error("You are not a participant in this order chat");
+  if (isUser) {
+    return { isUser: true, isAdmin: false };
+  }
+  if (isProvider) {
+    return { isUser: false, isAdmin: true };
+  }
+  if (role && (isSuperadmin(role) || role === ROLES.SERVICE_ADMIN)) {
+    return { isUser: false, isAdmin: true };
   }
 
-  return { isUser, isAdmin };
+  throw new Error("You are not a participant in this order chat");
 };
 
 export const inferMediaTypeFromMime = (mimetype) => {
@@ -64,6 +72,7 @@ export const sendMessage = async ({
   mediaUrl,
   mediaType,
   mimeType,
+  role,
 }) => {
   if (!orderId || !from) {
     throw new Error("orderId and from are required");
@@ -86,7 +95,7 @@ export const sendMessage = async ({
     );
   }
 
-  const { isUser, isAdmin } = ensureParticipant(order, from);
+  const { isUser } = resolveChatParticipant(order, from, role);
 
   const to = isUser ? order.provider : order.createdBy;
 
@@ -118,7 +127,7 @@ export const sendMessage = async ({
   return withSignedMediaUrl(populated);
 };
 
-export const listMessages = async ({ orderId, userId }) => {
+export const listMessages = async ({ orderId, userId, role }) => {
   const order = await Order.findById(orderId);
   if (!order) {
     throw new Error("Order not found");
@@ -132,7 +141,7 @@ export const listMessages = async ({ orderId, userId }) => {
     );
   }
 
-  ensureParticipant(order, userId);
+  resolveChatParticipant(order, userId, role);
 
   await markOrderMessagesRead(orderId, userId);
 
