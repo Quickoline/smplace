@@ -27,9 +27,10 @@ const serviceSchema = new Schema(
       type: Number,
       min: 0,
     },
+    /** Bullet strings: what the client should provide (API always returns string[]). */
     requirements: {
-      type: String,
-      trim: true,
+      type: [String],
+      default: [],
     },
     included: {
       type: String,

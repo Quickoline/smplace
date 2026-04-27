@@ -38,7 +38,39 @@ async function assertCategoryPair(categoryId, subcategoryId) {
 
 }
 
+/**
+ * Legacy / single-field prose → bullets (newlines first, then sentence breaks).
+ * @param {unknown} chunk
+ * @returns {string[]}
+ */
+function normalizeLegacyProseString(chunk) {
+  const s = String(chunk).trim();
+  if (!s) return [];
+  const lines = s.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+  if (lines.length > 1) {
+    return lines
+      .map((line) => line.replace(/^\s*[-•*]\s*/, "").trim())
+      .filter(Boolean);
+  }
+  return s.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter(Boolean);
+}
 
+/**
+ * Coerce client/legacy shapes into trimmed bullet strings.
+ * Arrays with 2+ items are treated as explicit bullets (no sentence splitting).
+ * @param {unknown} value
+ * @returns {string[]}
+ */
+export function normalizeRequirements(value) {
+  if (value == null || value === "") return [];
+  if (Array.isArray(value)) {
+    const parts = value.map((x) => String(x).trim()).filter(Boolean);
+    if (parts.length > 1) return parts;
+    if (parts.length === 1) return normalizeLegacyProseString(parts[0]);
+    return [];
+  }
+  return normalizeLegacyProseString(value);
+}
 
 /** Plain object for API: ids + nested { _id, name } for labels (not stored on doc). */
 
@@ -118,7 +150,7 @@ export function serializeService(lean) {
 
     price: lean.price,
 
-    requirements: lean.requirements,
+    requirements: normalizeRequirements(lean.requirements),
 
     included: lean.included,
 
@@ -183,7 +215,7 @@ export const createService = async ({
 
     description,
 
-    requirements,
+    requirements: normalizeRequirements(requirements),
 
     included,
 
@@ -335,7 +367,7 @@ export const updateService = async (id, payload) => {
 
   if (payload.requirements !== undefined) {
 
-    $set.requirements = payload.requirements;
+    $set.requirements = normalizeRequirements(payload.requirements);
 
   }
 
