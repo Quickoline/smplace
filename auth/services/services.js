@@ -2,7 +2,6 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../model/model.js";
-import { sendPasswordResetEmail } from "./mail.js";
 import {
   normalizeCreatableStaffRole,
   normalizeAssignableStaffRole,
@@ -326,8 +325,9 @@ const passwordResetExpiryMs = () => {
 };
 
 /**
- * Marketplace customers only (`role: user`). Always succeeds from a privacy perspective
- * when the account is missing; sends email when the user exists.
+ * Marketplace customers only (`role: user`). Returns `{ token, resetUrl }` when the user
+ * exists (for app / web to open the reset page). Returns `null` when no account (generic
+ * response at controller). No email — clients redirect to `PASSWORD_RESET_WEB_URL`.
  */
 export const requestPasswordResetForUser = async (email) => {
   const e = String(email ?? "").trim().toLowerCase();
@@ -336,7 +336,7 @@ export const requestPasswordResetForUser = async (email) => {
   }
   const user = await User.findOne({ email: e, role: "user" });
   if (!user) {
-    return;
+    return null;
   }
   const raw = crypto.randomBytes(32).toString("hex");
   user.passwordResetToken = hashPasswordResetToken(raw);
@@ -349,15 +349,7 @@ export const requestPasswordResetForUser = async (email) => {
   const sep = base.includes("?") ? "&" : "?";
   const resetUrl = `${base}${sep}token=${encodeURIComponent(raw)}`;
 
-  try {
-    await sendPasswordResetEmail(user.email, resetUrl);
-  } catch (err) {
-    console.error("[mail] sendPasswordResetEmail failed:", err?.message || err);
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save();
-    throw err;
-  }
+  return { token: raw, resetUrl };
 };
 
 export const resetPasswordWithToken = async (rawToken, newPassword) => {

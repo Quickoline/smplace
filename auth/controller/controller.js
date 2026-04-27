@@ -14,11 +14,19 @@ import {
 export const forgotPasswordController = async (req, res) => {
   try {
     const { email } = req.body ?? {};
-    await requestPasswordResetForUser(email);
-    res.status(200).json({
-      message:
-        "If an account exists for that email, we sent password reset instructions.",
-    });
+    const result = await requestPasswordResetForUser(email);
+    if (result) {
+      res.status(200).json({
+        message: "Open the reset page to choose a new password.",
+        token: result.token,
+        resetUrl: result.resetUrl,
+      });
+    } else {
+      res.status(200).json({
+        message:
+          "If an account exists for that email, you can reset your password from the next step.",
+      });
+    }
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

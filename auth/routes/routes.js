@@ -24,7 +24,7 @@ const router = Router();
 // User registration: email + phone + password
 router.post("/register", registerUserController);
 
-// Password reset (marketplace users) — email via nodemailer
+// Password reset (marketplace users) — returns token + resetUrl (no email)
 router.post("/forgot-password", forgotPasswordController);
 router.post("/reset-password", resetPasswordController);
 
