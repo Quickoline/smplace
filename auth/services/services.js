@@ -2,6 +2,13 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../model/model.js";
+import { Order } from "../../api/order/model/model.js";
+import { Service } from "../../api/service/model/model.js";
+import { Payment } from "../../api/payment/model/model.js";
+import { ContactSubmission } from "../../api/contact/model/model.js";
+import { FeedbackSubmission } from "../../api/feedback/model/model.js";
+import { ProviderOnboarding } from "../../api/onboarding/model/model.js";
+import { ServiceRequest } from "../../api/serviceRequest/model/model.js";
 import {
   normalizeCreatableStaffRole,
   normalizeAssignableStaffRole,
@@ -29,7 +36,8 @@ export const registerUser = async ({ email, phone, password, name }) => {
     throw new Error("email, phone, password and name are required");
   }
 
-  const existing = await User.findOne({ email });
+  const e = String(email).trim().toLowerCase();
+  const existing = await User.findOne({ email: e, role: "user" });
   if (existing) {
     throw new Error("Email already in use");
   }
@@ -37,7 +45,7 @@ export const registerUser = async ({ email, phone, password, name }) => {
   const passwordHash = await bcrypt.hash(password, 10);
 
   const user = await User.create({
-    email,
+    email: e,
     name: n.slice(0, 120),
     phone,
     passwordHash,
@@ -63,7 +71,10 @@ export const loginUserOrAdmin = async ({
     throw new Error("employeeId is required for staff login");
   }
 
-  const query = { email, role };
+  const query = {
+    email: String(email).trim().toLowerCase(),
+    role,
+  };
   if (role === "user") {
     if (phone) {
       query.phone = phone;
@@ -94,7 +105,10 @@ export const loginStaffByEmailPassword = async ({ email, password }) => {
   }
 
   const e = String(email).trim().toLowerCase();
-  const user = await User.findOne({ email: e });
+  const user = await User.findOne({
+    email: e,
+    role: { $in: Array.from(STAFF_EMAIL_LOGIN_ROLES) },
+  });
   if (!user || !STAFF_EMAIL_LOGIN_ROLES.has(user.role)) {
     throw new Error("Invalid credentials");
   }
@@ -128,9 +142,11 @@ export const createAdminBySuperAdmin = async ({
     throw new Error("Only superadmin can create admin");
   }
 
-  const existing = await User.findOne({ email });
+  const e = String(email).trim().toLowerCase();
+  const role = normalizeCreatableStaffRole(staffRole);
+  const existing = await User.findOne({ email: e, role });
   if (existing) {
-    throw new Error("Email already in use");
+    throw new Error("Email already in use for this staff role");
   }
 
   if (!phone || !String(phone).trim()) {
@@ -138,10 +154,9 @@ export const createAdminBySuperAdmin = async ({
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const role = normalizeCreatableStaffRole(staffRole);
 
   const admin = await User.create({
-    email,
+    email: e,
     name: displayName.slice(0, 120),
     employeeId,
     phone: String(phone).trim(),
@@ -228,9 +243,10 @@ export const updateStaffAccountBySuperadmin = async ({
     if (e !== user.email) {
       const taken = await User.findOne({
         email: e,
+        role: user.role,
         _id: { $ne: user._id },
       }).lean();
-      if (taken) throw new Error("Email already in use");
+      if (taken) throw new Error("Email already in use for this role");
       user.email = e;
     }
   }
@@ -313,6 +329,100 @@ export const updateUserProfile = async (userId, { name, phone }) => {
 
   await user.save();
   return getUserProfile(userId);
+};
+
+const serializeSuperadminUserRow = (u) => ({
+  id: u._id?.toString?.() ?? String(u._id),
+  email: u.email,
+  name: u.name ?? null,
+  phone: u.phone ?? null,
+  role: u.role,
+  employeeId: u.employeeId ?? null,
+  ratingAverage:
+    u.ratingAverage != null ? Number(u.ratingAverage) : null,
+  ratingCount: u.ratingCount != null ? Number(u.ratingCount) : 0,
+  clientRatingAverage:
+    u.clientRatingAverage != null ? Number(u.clientRatingAverage) : null,
+  clientRatingCount: u.clientRatingCount != null ? Number(u.clientRatingCount) : 0,
+  createdAt: u.createdAt,
+  updatedAt: u.updatedAt,
+});
+
+/** Superadmin full user directory (all roles). */
+export const listAllUsersForSuperadmin = async () => {
+  const users = await User.find({})
+    .select("-passwordHash -passwordResetToken -passwordResetExpires")
+    .sort({ createdAt: -1 })
+    .lean();
+  return users.map(serializeSuperadminUserRow);
+};
+
+/** Superadmin dashboard counters for admin app home. */
+export const getSuperadminDashboardStats = async () => {
+  const [
+    totalUsers,
+    totalCustomers,
+    totalStaff,
+    totalSuperadmins,
+    totalServices,
+    totalOrders,
+    pendingOrders,
+    processingOrders,
+    completedOrders,
+    totalPayments,
+    paidPayments,
+    pendingPayments,
+    totalContacts,
+    totalFeedback,
+    totalOnboarding,
+    totalServiceRequests,
+  ] = await Promise.all([
+    User.countDocuments({}),
+    User.countDocuments({ role: "user" }),
+    User.countDocuments({ role: { $in: STAFF_ACCOUNT_ROLES } }),
+    User.countDocuments({ role: "superadmin" }),
+    Service.countDocuments({}),
+    Order.countDocuments({}),
+    Order.countDocuments({ status: "pending" }),
+    Order.countDocuments({ status: "processing" }),
+    Order.countDocuments({
+      status: { $in: ["task_completed", "final_payment_verified"] },
+    }),
+    Payment.countDocuments({}),
+    Payment.countDocuments({ status: "paid" }),
+    Payment.countDocuments({ status: "pending" }),
+    ContactSubmission.countDocuments({}),
+    FeedbackSubmission.countDocuments({}),
+    ProviderOnboarding.countDocuments({}),
+    ServiceRequest.countDocuments({}),
+  ]);
+
+  return {
+    users: {
+      total: totalUsers,
+      customers: totalCustomers,
+      staff: totalStaff,
+      superadmins: totalSuperadmins,
+    },
+    operations: {
+      services: totalServices,
+      orders: totalOrders,
+      pendingOrders,
+      processingOrders,
+      completedOrders,
+    },
+    inbox: {
+      contacts: totalContacts,
+      feedback: totalFeedback,
+      onboarding: totalOnboarding,
+      serviceRequests: totalServiceRequests,
+    },
+    payments: {
+      total: totalPayments,
+      paid: paidPayments,
+      pending: pendingPayments,
+    },
+  };
 };
 
 const hashPasswordResetToken = (raw) =>

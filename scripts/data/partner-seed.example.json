@@ -1,0 +1,41 @@
+{
+  "superadminEmail": "jitesh@sem.com",
+  "defaultPassword": "@Techno101",
+  "entries": [
+    {
+      "email": "sanjeevmishra19745@gmail.com",
+      "clientName": "Sanjeev Mishra",
+      "adminDisplayName": "Sanjeev · Elizble Partner",
+      "phone": "9100000001",
+      "employeeId": "EMP-PART-SANJEEV"
+    },
+    {
+      "email": "rajeshshukla8119@gmail.com",
+      "clientName": "Rajesh Shukla",
+      "adminDisplayName": "Rajesh Shukla (Partner)",
+      "phone": "9100000002",
+      "employeeId": "EMP-PART-RAJESH"
+    },
+    {
+      "email": "virat.inclined@gmail.com",
+      "clientName": "Virat Sharma",
+      "adminDisplayName": "Virat K. · Partner Desk",
+      "phone": "9100000003",
+      "employeeId": "EMP-PART-VIRAT-I"
+    },
+    {
+      "email": "jiteshmishra58@gmail.com",
+      "clientName": "Jitesh Mishra",
+      "adminDisplayName": "Jitesh M. (Partner)",
+      "phone": "9100000004",
+      "employeeId": "EMP-PART-JITESH"
+    },
+    {
+      "email": "virat943623@gmail.com",
+      "clientName": "Virat Singh",
+      "adminDisplayName": "Virat S. · Partner Ops",
+      "phone": "9100000005",
+      "employeeId": "EMP-PART-VIRAT-2"
+    }
+  ]
+}

@@ -7,7 +7,6 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
     },
@@ -78,5 +77,8 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
+/** Same email may exist once per role (e.g. marketplace `user` + `service_admin`). */
+userSchema.index({ email: 1, role: 1 }, { unique: true });
 
 export const User = mongoose.model("User", userSchema);

@@ -79,10 +79,10 @@ const CATEGORY_TREE = [
   {
     name: "Buy/Sell",
     subcategories: [
-      "Business & M&A Brokerage",
-      "Franchise Transfer Brokerage",
-      "Digital Assets & Accounts Brokerage",
-      "Software & SaaS Transfer Brokerage",
+      "Company Sale",
+      "Franchise",
+      "Digital Assets & Accounts",
+      "Software & SaaS",
     ],
   },
   {
@@ -278,7 +278,7 @@ const SERVICE_SEEDS = [
     description:
       "ROC and MCA calendar: annual financial filings, director and auditor appointments, and event-driven forms for changes in capital, address, directors, or charges. Organises documents so board-approved resolutions match filed facts and due dates are tracked.",
     requirements:
-      "Audited financial statements, signed board reports, AGM details, director DSCs, event-specific papers (allotment, transfer, charge deeds, lease for address change), prior filing references (SRNs), and company email/mobile for MCA login. For delays, history of defaults helps plan remedial filings.",
+      "Audited financial statements, signed board reports, AGM details, director DSCs, event-specific papers (allotment, share-movement filings, charge deeds, lease for address change), prior filing references (SRNs), and company email/mobile for MCA login. For delays, history of defaults helps plan remedial filings.",
     included: "",
   },
   {
@@ -445,41 +445,41 @@ const SERVICE_SEEDS = [
       "Raw images meeting marketplace resolution, dimensional and variant matrix, ingredient or compliance text for regulated categories, competitor ASINs for benchmarking, brand style for capitalisation and claims, and translation needs if multilingual.",
     included: "",
   },
-  // --- Buy/Sell ---
+  // --- Buy/Sell (subcategory strings must match CATEGORY_TREE exactly) ---
   {
-    name: "Business Sale & M&A Brokerage",
+    name: "Company Sale",
     category: "Buy/Sell",
-    subcategory: "Business & M&A Brokerage",
+    subcategory: "Company Sale",
     description:
-      "Structured buy-side and sell-side support for transferring operating businesses: from small private companies to larger asset deals. We help clarify what is being sold (shares vs assets), align expectations on valuation bands, introduce serious counterparties under confidentiality, and keep diligence and negotiation organised so both sides understand timelines, risks, and typical deal steps before lawyers and accountants finalise terms.",
+      "Structured buy-side and sell-side support for company sales: from small private companies to larger asset deals. We help clarify what is being sold (shares vs assets), align expectations on valuation bands, introduce serious counterparties under confidentiality, and keep diligence and negotiation organised so both sides understand timelines, risks, and typical deal steps before lawyers and accountants finalise terms.",
     requirements:
       "Seller: company/incorporation details, cap table or ownership proof, 2–3 years financials or management accounts, asset/stock summary, list of material contracts, and any existing LOI or term sheet. Buyer: brief on target profile, proof of funds or financing route, and NDA acceptance. Both: preferred deal structure (asset vs share), jurisdiction, and target close window.",
     included: "",
   },
   {
-    name: "Franchise Resale & Transfer Brokerage",
+    name: "Franchise Resale",
     category: "Buy/Sell",
-    subcategory: "Franchise Transfer Brokerage",
+    subcategory: "Franchise",
     description:
-      "Brokerage focused on franchise resales: matching incoming franchisees with outgoing operators, coordinating with franchisor approval processes, and making handover expectations clear. Suitable when a unit is changing hands but the brand agreement and franchisor consent remain central to a lawful transfer.",
+      "Support for franchise resales: matching incoming franchisees with outgoing operators, coordinating with franchisor approval processes, and making handover expectations clear. Suitable when a unit is changing hands but the brand agreement and franchisor consent remain central to a lawful resale.",
     requirements:
-      "Current franchise agreement (or key terms), franchisor contact for transfer approval, territory and outlet details, FDD or disclosure summary if available, P&L for the unit, list of fixed assets and staff, and any transfer fee or training obligations from the franchisor. Buyer: background summary and capital available for franchise fee and working capital.",
+      "Current franchise agreement (or key terms), franchisor contact for resale approval, territory and outlet details, FDD or disclosure summary if available, P&L for the unit, list of fixed assets and staff, and any handover or training fees from the franchisor. Buyer: background summary and capital available for franchise fee and working capital.",
     included: "",
   },
   {
-    name: "Digital Assets, Handles & Account Transfers",
+    name: "Digital Assets & Accounts",
     category: "Buy/Sell",
-    subcategory: "Digital Assets & Accounts Brokerage",
+    subcategory: "Digital Assets & Accounts",
     description:
-      "Facilitation for transfers where value sits in digital presence: social media accounts, content channels, marketplace seller accounts, domains bundled with operations, and similar. Emphasis on platform rules, proof of control, and a clear handover checklist so buyers receive access and sellers exit cleanly within each platform’s terms.",
+      "Facilitation when value sits in digital presence: social media accounts, content channels, marketplace seller accounts, domains bundled with operations, and similar. Emphasis on platform rules, proof of control, and a clear handover checklist so buyers receive access and sellers exit cleanly within each platform’s terms.",
     requirements:
-      "Inventory of accounts (URLs/handles), platform login and recovery method outline, proof of ownership or long-term control, follower/engagement or revenue screenshots where relevant, any trademark or brand tie-in, and written confirmation that transfer complies with platform policies. Buyer: intended use and compliance with platform TOS.",
+      "Inventory of accounts (URLs/handles), platform login and recovery method outline, proof of ownership or long-term control, follower/engagement or revenue screenshots where relevant, any trademark or brand tie-in, and written confirmation that the handover complies with platform policies. Buyer: intended use and compliance with platform TOS.",
     included: "",
   },
   {
-    name: "Software, Codebase & SaaS Transfer Brokerage",
+    name: "Software, Codebase & SaaS",
     category: "Buy/Sell",
-    subcategory: "Software & SaaS Transfer Brokerage",
+    subcategory: "Software & SaaS",
     description:
       "Support for buying or selling software products, source code, and small SaaS operations: scoping what is included (repo, hosting, customers, IP), identifying technical and commercial dependencies, and structuring introductions and diligence so technical buyers and sellers can align on stack, data, and migration.",
     requirements:
@@ -636,10 +636,10 @@ const BUYSELL_SEEDS = [
   {
     title: "Premium Support Tool License (Resale)",
     type: "product",
-    description: "Annual license transfer for ticketing integration suite.",
+    description: "Annual license resale for ticketing integration suite.",
     price: 0,
     serviceCategory: "software",
-    requirements: "Legal transfer paperwork — pricing on inquiry.",
+    requirements: "Legal handover paperwork — pricing on inquiry.",
   },
   {
     title: "Regional IT Services Company",

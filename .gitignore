@@ -2,6 +2,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+scripts/data/partner-seed.local.json
 uploads/
 *.log
 .DS_Store

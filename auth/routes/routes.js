@@ -11,6 +11,8 @@ import {
   updateProfileController,
   forgotPasswordController,
   resetPasswordController,
+  listAllUsersController,
+  superadminDashboardStatsController,
 } from "../controller/controller.js";
 import {
   authenticate,
@@ -51,6 +53,18 @@ router.patch(
   authenticate,
   requireSuperadmin,
   updateStaffAccountController
+);
+router.get(
+  "/superadmin/users",
+  authenticate,
+  requireSuperadmin,
+  listAllUsersController
+);
+router.get(
+  "/superadmin/stats",
+  authenticate,
+  requireSuperadmin,
+  superadminDashboardStatsController
 );
 
 // Upload QR for admin (superadmin) - multipart file

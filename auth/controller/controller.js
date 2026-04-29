@@ -7,6 +7,8 @@ import {
   updateStaffAccountBySuperadmin,
   getUserProfile,
   updateUserProfile,
+  listAllUsersForSuperadmin,
+  getSuperadminDashboardStats,
   requestPasswordResetForUser,
   resetPasswordWithToken,
 } from "../services/services.js";
@@ -240,4 +242,22 @@ export const uploadQrController = (req, res) => {
   }
   const url = `/uploads/qr/${req.file.filename}`;
   res.status(200).json({ url });
+};
+
+export const listAllUsersController = async (req, res) => {
+  try {
+    const users = await listAllUsersForSuperadmin();
+    res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const superadminDashboardStatsController = async (req, res) => {
+  try {
+    const stats = await getSuperadminDashboardStats();
+    res.status(200).json({ stats });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
